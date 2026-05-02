@@ -105,7 +105,10 @@ int main(void){
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
-
+        
+        for (int i = 0; i < envItemsLength; i++){
+            DrawRectangleRec(envItems[i].rect, envItems[i].color);
+        }
         DrawTexturePro(
             fundo,
             (Rectangle){0, 0, fundo.width, fundo.height},
@@ -115,9 +118,6 @@ int main(void){
             WHITE
         );
 
-        for (int i = 0; i < envItemsLength; i++){
-            DrawRectangleRec(envItems[i].rect, envItems[i].color);
-        }
 
         DrawSpike(spike);
 
