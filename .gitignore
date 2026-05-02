@@ -53,3 +53,9 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Executaveis customizados
+main
+bin/
+build/
+
