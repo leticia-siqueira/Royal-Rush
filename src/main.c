@@ -2,145 +2,188 @@
 #include "objetos.h"
 #include <stdio.h>
 
-#define G 300
-#define speed_jump 350.0f
-#define speed_hor 200.f
+// ================= CONFIGURAÇÕES =================
+#define GRAVIDADE 400
+#define FORCA_PULO 450.0f
+#define VELOCIDADE_HORIZONTAL 200.0f
 
-typedef struct{
-    Vector2 position;
-    float speed;
-    bool canJump;
-} Player;
+// ================= ESTRUTURAS =================
+typedef struct {
+    Vector2 posicao;
+    float velocidadeY;
+    bool podePular;
+    int vidas;
+} Jogador;
 
-typedef struct{
-    Rectangle rect;
-    bool blocking;
-    Color color;
-} EnvItem;
+typedef struct {
+    Rectangle area;
+    bool bloqueia;
+    Color cor;
+} Plataforma;
 
-void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta){
+// ================= FUNÇÃO DO JOGADOR =================
+void AtualizarJogador(Jogador *jogador, Plataforma *plataformas, int qtd, float dt) {
 
-    if(IsKeyDown(KEY_LEFT)) player->position.x -= speed_hor * delta;
-    if(IsKeyDown(KEY_RIGHT)) player->position.x += speed_hor * delta;
+    // Movimento horizontal
+    if (IsKeyDown(KEY_LEFT))  jogador->posicao.x -= VELOCIDADE_HORIZONTAL * dt;
+    if (IsKeyDown(KEY_RIGHT)) jogador->posicao.x += VELOCIDADE_HORIZONTAL * dt;
 
-    if((IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_UP)) && player->canJump){
-        player->speed = -speed_jump;
-        player->canJump = false;
+    // Pulo
+    if ((IsKeyDown(KEY_SPACE) || IsKeyDown(KEY_UP)) && jogador->podePular) {
+        jogador->velocidadeY = -FORCA_PULO;
+        jogador->podePular = false;
     }
 
-    player->speed += G * delta;
-    player->position.y += player->speed * delta;
+    // Gravidade
+    jogador->velocidadeY += GRAVIDADE * dt;
 
-    player->canJump = false;
+    // Movimento vertical
+    jogador->posicao.y += jogador->velocidadeY * dt;
 
-    for(int i = 0; i < envItemsLength; i++){
-        EnvItem *ei = &envItems[i];
+    // Reset do pulo
+    jogador->podePular = false;
 
-        if(ei->blocking){
-            if(player->position.x > ei->rect.x &&
-               player->position.x < ei->rect.x + ei->rect.width &&
-               player->position.y >= ei->rect.y &&
-               player->position.y <= ei->rect.y + 10){
+    Rectangle playerRect = {
+    jogador->posicao.x - 50,
+    jogador->posicao.y - 50,
+    100,
+    100
+    };
 
-                player->position.y = ei->rect.y;
-                player->speed = 0;
-                player->canJump = true;
+    // Colisão com plataformas
+    for (int i = 0; i < qtd; i++) {
+        Plataforma *p = &plataformas[i];
+
+        float basePlayer = playerRect.y + playerRect.height;
+        float topoPlataforma = p->area.y;
+
+        if (p->bloqueia && CheckCollisionRecs(playerRect, p->area)) {
+
+            if(jogador->velocidadeY > 0){
+
+                if (basePlayer >= topoPlataforma && basePlayer <= topoPlataforma + jogador->velocidadeY * dt){
+
+                    jogador->posicao.y = p->area.y - 50;
+                    jogador->velocidadeY = 0;
+                    jogador->podePular = true;
+
+                }
             }
+
         }
     }
 }
 
-int main(void){
+// ================= MAIN =================
+int main(void) {
 
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
+    const int LARGURA_TELA = 1280;
+    const int ALTURA_TELA = 720;
 
-    InitWindow(screenWidth, screenHeight, "Bubble Rush");
+    InitWindow(LARGURA_TELA, ALTURA_TELA, "Bubble Rush");
 
-    Texture2D princesa = LoadTexture("imagens/princesa.png");
-    Texture2D fundo = LoadTexture("imagens/fundo.png");
+    // Texturas
+    Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
+    Texture2D texFundo = LoadTexture("imagens/fundo.png");
 
-    Player player = {0};
-    player.position = (Vector2){400, 200};
-    player.speed = 0;
-    player.canJump = false;
+    // Jogador
+    Jogador jogador = {0};
+    jogador.posicao = (Vector2){400, 200};
 
-    EnvItem envItems[] = {
-        {{0, 577, screenWidth, 300}, true, GRAY},
-        {{929, 412, 144, 38}, true, RED}
+    // Plataformas
+    Plataforma plataformas[] = {
+        {{0, 577, LARGURA_TELA, 300}, true, GRAY}, // chão
+        {{929, 412, 144, 38}, true, RED}           // plataforma
     };
 
-    int envItemsLength = sizeof(envItems) / sizeof(envItems[0]);
+    int qtdPlataformas = sizeof(plataformas) / sizeof(plataformas[0]);
 
+    // Inimigo
     SpikeBall spike;
     InitSpike(&spike);
 
+    // Estado do jogo
     int vidas = 3;
-    float tempoDano = 0;
+    float tempoInvulneravel = 0;
 
     SetTargetFPS(60);
 
-    while (!WindowShouldClose()){
+    // ================= LOOP =================
+    while (!WindowShouldClose()) {
 
-        float delta = GetFrameTime();
+        float dt = GetFrameTime();
 
-        UpdatePlayer(&player, envItems, envItemsLength, delta);
+        // Debug: pegar posição do mouse
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Vector2 mouse = GetMousePosition();
+            printf("X: %.0f Y: %.0f\n", mouse.x, mouse.y);
+        }
+
+        // Atualizações
+        AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
         UpdateSpike(&spike);
 
-        if (tempoDano > 0) tempoDano -= delta;
+        if (tempoInvulneravel > 0) tempoInvulneravel -= dt;
 
-        Rectangle playerRect = {
-            player.position.x - 50,
-            player.position.y - 50,
+        // Hitbox do jogador
+        Rectangle hitboxJogador = {
+            //jogador.posiçao é o centro da imagem
+            jogador.posicao.x - 50,
+            jogador.posicao.y - 50,
             100,
             100
         };
 
-        if (CheckSpikeCollision(spike, playerRect) && tempoDano <= 0) {
+        // Colisão com inimigo
+        if (CheckSpikeCollision(spike, hitboxJogador) && tempoInvulneravel <= 0) {
             vidas--;
-            tempoDano = 1.0f;
-            spike.position.x = screenWidth;
+            tempoInvulneravel = 1.0f;
+            spike.position.x = LARGURA_TELA;
         }
 
+        // ================= DESENHO =================
         BeginDrawing();
-
         ClearBackground(RAYWHITE);
-        
-        for (int i = 0; i < envItemsLength; i++){
-            DrawRectangleRec(envItems[i].rect, envItems[i].color);
-        }
+
+        // Fundo
         DrawTexturePro(
-            fundo,
-            (Rectangle){0, 0, fundo.width, fundo.height},
-            (Rectangle){0, 0, screenWidth, screenHeight},
+            texFundo,
+            (Rectangle){0, 0, texFundo.width, texFundo.height},
+            (Rectangle){0, 0, LARGURA_TELA, ALTURA_TELA},
             (Vector2){0, 0},
             0.0f,
             WHITE
         );
 
+        // Plataformas
+        for (int i = 0; i < qtdPlataformas; i++) {
+            DrawRectangleRec(plataformas[i].area, plataformas[i].cor);
+        }
 
+        // Inimigo
         DrawSpike(spike);
 
+        // Jogador (princesa)
         DrawTexturePro(
-            princesa,
-            (Rectangle){0, 0, princesa.width, princesa.height},
-            (Rectangle){player.position.x, player.position.y, 100, 100},
+            texPrincesa,
+            (Rectangle){0, 0, texPrincesa.width, texPrincesa.height},
+            (Rectangle){jogador.posicao.x, jogador.posicao.y, 100, 100},
             (Vector2){50, 50},
             0.0f,
             WHITE
         );
 
+        // UI
         DrawText(TextFormat("Vidas: %d", vidas), 30, 30, 30, RED);
 
         EndDrawing();
     }
 
+    // ================= FINALIZAÇÃO =================
     UnloadSpike(&spike);
-    UnloadTexture(fundo);
-    UnloadTexture(princesa);
+    UnloadTexture(texFundo);
+    UnloadTexture(texPrincesa);
 
     CloseWindow();
-
     return 0;
 }
-
