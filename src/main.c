@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "objetos.h"
+#include "bruxa.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -140,6 +141,8 @@ int main(void) {
     // Inimigo
     SpikeBall spike;
     InitSpike(&spike);
+    BruxaVoando bruxa;
+    InitBruxa(&bruxa);
 
     float tempoInvulneravel = 0;
 
@@ -157,6 +160,7 @@ int main(void) {
 
         AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
         UpdateSpike(&spike);
+        UpdateBruxa(&bruxa);
 
         if (tempoInvulneravel > 0) tempoInvulneravel -= dt;
 
@@ -171,6 +175,11 @@ int main(void) {
             jogador.vidas--;
             tempoInvulneravel = 1.0f;
             spike.position.x = LARGURA_TELA;
+        }
+        if (CheckBruxaCollision(bruxa, hitboxJogador) && tempoInvulneravel <= 0) {
+            jogador.vidas--;
+            tempoInvulneravel = 1.0f;
+            bruxa.position.x = LARGURA_TELA;
         }
 
         //  DISPARO 
@@ -240,6 +249,8 @@ int main(void) {
         // Inimigo
         DrawSpike(spike);
 
+        DrawBruxa(bruxa);
+
         // ESCOLHA DO FRAME DE PULO
         Texture2D texAtual = texPrincesa;
 
@@ -288,6 +299,7 @@ int main(void) {
 
     // FINALIZAÇÃO
     UnloadSpike(&spike);
+    UnloadBruxa(&bruxa);
     UnloadTexture(texFundo);
     UnloadTexture(texPrincesa);
     UnloadTexture(texEstrela);

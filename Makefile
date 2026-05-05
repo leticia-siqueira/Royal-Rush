@@ -5,7 +5,7 @@ LIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 TARGET = main
 
-SRC = src/main.c src/objetos.c
+SRC = src/main.c src/objetos.c src/bruxa.c
 
 all:
 	$(CC) $(SRC) -o $(TARGET) $(CFLAGS) $(LIBS)
