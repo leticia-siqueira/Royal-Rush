@@ -42,7 +42,7 @@ void DrawBruxa(BruxaVoando bruxa) {
     DrawTexturePro(
         bruxa.texture,
         (Rectangle){0, 0, bruxa.texture.width, bruxa.texture.height},
-        (Rectangle){bruxa.position.x, bruxa.position.y, 110, 110},
+        (Rectangle){bruxa.position.x, bruxa.position.y, 100, 100},
         (Vector2){0, 0},
         0.0f,
         WHITE
@@ -56,8 +56,8 @@ bool CheckBruxaCollision(BruxaVoando bruxa, Rectangle playerRect) {
     Rectangle bruxaRect = {
         bruxa.position.x,
         bruxa.position.y,
-        110,
-        110
+        100,
+        100
     };
 
     return CheckCollisionRecs(bruxaRect, playerRect);
