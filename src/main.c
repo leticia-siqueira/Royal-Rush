@@ -4,11 +4,19 @@
 #include "tiro.h"
 #include <stdio.h>
 
+typedef enum{
+    MENU,
+    JOGO,
+    GAMEOVER
+}EstadoJogo;
+
 // MAIN 
 int main(void) {
 
     const int LARGURA_TELA = 1280;
     const int ALTURA_TELA = 720;
+
+    EstadoJogo estado = MENU; //inicia no Menu
 
     InitWindow(LARGURA_TELA, ALTURA_TELA, "Bubble Rush");
 
@@ -16,6 +24,8 @@ int main(void) {
     Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
     Texture2D texFundo = LoadTexture("imagens/fundo.png");
     Texture2D texEstrela = LoadTexture("imagens/estrela.png");
+    Texture2D texMenu = LoadTexture("imagens/menu.png");
+    Texture2D texGameOver = LoadTexture("imagens/GAMEOVER.png");
 
     // FRAMES DO PULO
     Texture2D jump[3];
@@ -52,37 +62,65 @@ int main(void) {
 
     while (!WindowShouldClose()) {
 
-        float dt = GetFrameTime();
 
-        // INPUT DE TIRO
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            Vector2 mouse = GetMousePosition();
-            DispararTiro(jogador.posicao, mouse);
+        if(estado == MENU){
+            if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            estado = JOGO;
+            }
+        }
+        else if(estado == JOGO){
+            
+            float dt = GetFrameTime();
+    
+            // INPUT DE TIRO
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                Vector2 mouse = GetMousePosition();
+                DispararTiro(jogador.posicao, mouse);
+            }
+    
+            //ATUALIZAÇÕES
+            AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
+            AtualizarTiros(dt, LARGURA_TELA, ALTURA_TELA);
+            UpdateSpike(&spike);
+    
+            if (tempoInvulneravel > 0) tempoInvulneravel -= dt;
+    
+            Rectangle hitboxJogador = {
+                jogador.posicao.x - 50,
+                jogador.posicao.y - 50,
+                100,
+                100
+            };
+    
+            if (CheckSpikeCollision(spike, hitboxJogador) && tempoInvulneravel <= 0) {
+                jogador.vidas--;
+                tempoInvulneravel = 1.0f;
+                spike.position.x = LARGURA_TELA;
+            }
+
+            if(jogador.vidas == 0){
+                estado = GAMEOVER;
+            }
+
         }
 
-        //ATUALIZAÇÕES
-        AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
-        AtualizarTiros(dt, LARGURA_TELA, ALTURA_TELA);
-        UpdateSpike(&spike);
-
-        if (tempoInvulneravel > 0) tempoInvulneravel -= dt;
-
-        Rectangle hitboxJogador = {
-            jogador.posicao.x - 50,
-            jogador.posicao.y - 50,
-            100,
-            100
-        };
-
-        if (CheckSpikeCollision(spike, hitboxJogador) && tempoInvulneravel <= 0) {
-            jogador.vidas--;
-            tempoInvulneravel = 1.0f;
-            spike.position.x = LARGURA_TELA;
-        }
 
         //DESENHO
+        
         BeginDrawing();
         ClearBackground(RAYWHITE);
+        if(estado == MENU){
+
+            DrawTexturePro(
+                texMenu,
+                (Rectangle){0,0,texMenu.width, texMenu.height},
+                (Rectangle){0,0,LARGURA_TELA, ALTURA_TELA},
+                (Vector2){0,0},
+                0,
+                WHITE
+            );
+
+        }else if(estado == JOGO){
 
         // FUNDO
         DrawTexturePro(
@@ -133,7 +171,18 @@ int main(void) {
 
         // UI
         DrawText(TextFormat("Vidas: %d", jogador.vidas), 30, 30, 30, RED);
+    }else{
 
+        DrawTexturePro(
+                texGameOver,
+                (Rectangle){0,0,texGameOver.width, texGameOver.height},
+                (Rectangle){0,0,LARGURA_TELA, ALTURA_TELA},
+                (Vector2){0,0},
+                0,
+                WHITE
+            );
+
+    }
         EndDrawing();
     }
 
@@ -142,6 +191,7 @@ int main(void) {
     UnloadTexture(texFundo);
     UnloadTexture(texPrincesa);
     UnloadTexture(texEstrela);
+
 
     for (int i = 0; i < 3; i++) UnloadTexture(jump[i]);
 
