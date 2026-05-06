@@ -122,6 +122,10 @@ int main(void) {
 
         }else if(estado == JOGO){
 
+        // PLATAFORMAS
+        for (int i = 0; i < qtdPlataformas; i++) {
+            DrawRectangleRec(plataformas[i].area, plataformas[i].cor);
+        }
         // FUNDO
         DrawTexturePro(
             texFundo,
@@ -132,10 +136,6 @@ int main(void) {
             WHITE
         );
 
-        // PLATAFORMAS
-        for (int i = 0; i < qtdPlataformas; i++) {
-            DrawRectangleRec(plataformas[i].area, plataformas[i].cor);
-        }
 
         // INIMIGO
         DrawSpike(spike);
