@@ -30,26 +30,54 @@ void AtualizarJogador(Jogador *jogador, Plataforma *plataformas, int qtd, float 
     };
 
     // Colisão com plataformas
-    for (int i = 0; i < qtd; i++) {
-        Plataforma *p = &plataformas[i];
+for (int i = 0; i < qtd; i++) {
 
-        float basePlayer = playerRect.y + playerRect.height;
-        float topoPlataforma = p->area.y;
+    Plataforma *p = &plataformas[i];
 
-        if (p->bloqueia && CheckCollisionRecs(playerRect, p->area)) {
+    float basePlayer = playerRect.y + playerRect.height;
+    float topoPlataforma = p->area.y;
 
-            if (jogador->velocidadeY > 0) {
+    if (p->bloqueia && CheckCollisionRecs(playerRect, p->area)) {
 
-                if (basePlayer >= topoPlataforma &&
-                    basePlayer <= topoPlataforma + jogador->velocidadeY * dt) {
+        // ================= CAINDO =================
+        if (jogador->velocidadeY > 0) {
 
-                    jogador->posicao.y = p->area.y - 50;
-                    jogador->velocidadeY = 0;
-                    jogador->podePular = true;
-                }
+            if (basePlayer >= topoPlataforma &&
+                basePlayer <= topoPlataforma +
+                jogador->velocidadeY * dt) {
+
+                // coloca jogador em cima
+                jogador->posicao.y = p->area.y - 50;
+
+                jogador->velocidadeY = 0;
+
+                jogador->podePular = true;
+            }
+        }
+
+        // ================= SUBINDO =================
+        else if (jogador->velocidadeY < 0) {
+
+            float topoJogador = playerRect.y;
+
+            float basePlataforma =
+                p->area.y + p->area.height;
+
+            // bateu embaixo da plataforma
+            if (topoJogador <= basePlataforma &&
+                topoJogador >= basePlataforma +
+                jogador->velocidadeY * dt) {
+
+                // empurra jogador para baixo
+                jogador->posicao.y =
+                    basePlataforma + 50;
+
+                // cancela subida
+                jogador->velocidadeY = 0;
             }
         }
     }
+}
 
     // Estados
     if (!jogador->podePular) {
