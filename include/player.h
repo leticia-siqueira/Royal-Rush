@@ -5,8 +5,8 @@
 #include <stdbool.h>
 
 // CONFIG
-#define GRAVIDADE 400
-#define FORCA_PULO 450.0f
+#define GRAVIDADE 450
+#define FORCA_PULO 600.0f
 #define VELOCIDADE_HORIZONTAL 200.0f
 
 typedef enum {

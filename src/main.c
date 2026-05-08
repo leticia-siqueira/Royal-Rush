@@ -48,7 +48,7 @@ int main(void) {
     float platAltaY  = ALTURA_TELA * 0.35f;
 
     // ================= PLATAFORMAS =================
-    Plataforma plataformas[3];
+    Plataforma plataformas[4];
 
     // chão — apenas colisão, não será desenhado
     plataformas[0].area  = (Rectangle){0, chaoY, (float)LARGURA_TELA, (float)ALTURA_TELA};
@@ -65,7 +65,12 @@ int main(void) {
     plataformas[2].bloqueia = true;
     plataformas[2].cor   = BROWN;
 
-    int qtdPlataformas = 3;
+    // plataforma 3 — nova, média distância
+    plataformas[3].area     = (Rectangle){(float)LARGURA_TELA + 1200, platBaixaY, 220, 40};
+    plataformas[3].bloqueia = true;
+    plataformas[3].cor = BROWN;
+
+    int qtdPlataformas = 4;
 
     // ================= SEQUÊNCIAS DE PLATAFORMAS =================
     // {altura Y, largura} — usando os mesmos Y proporcionais
@@ -197,30 +202,60 @@ int main(void) {
                 (Vector2){0, 0}, 0, WHITE
             );
 
-            // 2) PLATAFORMAS FLUTUANTES — por cima do fundo
+            
+            // ================= PLATAFORMAS — ESTILO TIJOLO MARIO =================
             for (int i = 1; i < qtdPlataformas; i++) {
 
                 Rectangle p = plataformas[i].area;
 
-                // corpo principal
-                DrawRectangleRec(p, BROWN);
+                // Altura de cada linha de tijolos (divide a plataforma em 2 linhas)
+                int alturaTijolo = p.height / 2;
 
-                // borda clara no topo
-                DrawRectangle(p.x, p.y, p.width, 6, BEIGE);
+                // Fundo escuro — representa a argamassa entre os tijolos
+                DrawRectangleRec(p, (Color){100, 35, 10, 255});
 
-                // linhas verticais decorativas
-                for (int x = p.x; x < p.x + p.width; x += 40) {
-                    DrawLine(x, p.y, x, p.y + p.height, DARKBROWN);
+                // Desenha 2 linhas de tijolos
+                for (int linha = 0; linha < 2; linha++) {
+
+                    // Linhas ímpares são deslocadas pela metade do tijolo (efeito tijolo real)
+                    int deslocamento = (linha % 2 == 0) ? 0 : 20;
+
+                    // Posição Y desta linha
+                    int y = p.y + linha * alturaTijolo;
+
+                    // Começa o primeiro tijolo da linha (pode começar fora da plataforma)
+                    int x = p.x - 20 + deslocamento;
+
+                    while (x < p.x + p.width) {
+
+                        // Garante que o tijolo não ultrapasse a borda esquerda
+                        int tx = (x < p.x) ? p.x : x;
+
+                        // Garante que o tijolo não ultrapasse a borda direita
+                        int largura = 38;
+                        if (tx + largura > p.x + p.width) {
+                            largura = (p.x + p.width) - tx;
+                        }
+
+                        // Não desenha tijolos com largura inválida
+                        if (largura <= 0) {
+                            x += 40;
+                            continue;
+                        }
+
+                        // Corpo do tijolo (marrom laranjado)
+                        DrawRectangle(tx, y + 1, largura, alturaTijolo - 2,
+                            (Color){200, 100, 45, 255});
+
+                        // Brilho no topo do tijolo (mais claro)
+                        DrawRectangle(tx, y + 1, largura, 4,
+                            (Color){220, 130, 70, 255});
+
+                        // Próximo tijolo
+                        x += 40;
+                    }
                 }
-
-                // linha horizontal central
-                DrawLine(
-                    p.x, p.y + p.height / 2,
-                    p.x + p.width, p.y + p.height / 2,
-                    DARKBROWN
-                );
             }
-
             // 3) INIMIGO
             DrawSpike(spike);
 
