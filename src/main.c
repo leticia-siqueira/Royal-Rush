@@ -6,7 +6,7 @@
 
 #define VELOCIDADE_MAPA 200
 
-typedef enum{
+typedef enum {
     MENU,
     JOGO,
     GAMEOVER
@@ -14,69 +14,73 @@ typedef enum{
 
 int main(void) {
 
-    const int LARGURA_TELA = 1280;
-    const int ALTURA_TELA = 720;
+    // ================= TELA CHEIA =================
+    SetConfigFlags(FLAG_FULLSCREEN_MODE);
+    InitWindow(0, 0, "Royal Rush");
+
+    int LARGURA_TELA = GetScreenWidth();
+    int ALTURA_TELA  = GetScreenHeight();
 
     EstadoJogo estado = MENU;
 
-    InitWindow(LARGURA_TELA, ALTURA_TELA, "Royal Rush");
-
     // ================= TEXTURAS =================
     Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
-    Texture2D texFundo = LoadTexture("imagens/fundo.png");
-    Texture2D texEstrela = LoadTexture("imagens/estrela.png");
-    Texture2D texMenu = LoadTexture("imagens/menu.png");
+    Texture2D texFundo    = LoadTexture("imagens/fundo.png");
+    Texture2D texEstrela  = LoadTexture("imagens/estrela.png");
+    Texture2D texMenu     = LoadTexture("imagens/menu.png");
     Texture2D texGameOver = LoadTexture("imagens/GAMEOVER.png");
 
     // ================= FRAMES DO PULO =================
     Texture2D jump[3];
-
     jump[0] = LoadTexture("imagens/pulando1.png");
     jump[1] = LoadTexture("imagens/pulando2.png");
     jump[2] = LoadTexture("imagens/pulando3.png");
 
     // ================= JOGADOR =================
     Jogador jogador = {0};
+    jogador.posicao = (Vector2){400, ALTURA_TELA * 0.30f};
+    jogador.vidas   = 3;
 
-    jogador.posicao = (Vector2){400, 200};
-    jogador.vidas = 3;
+    // ================= PROPORÇÕES VISUAIS =================
+    // Baseadas no fundo: tijolos começam em ~80% da altura da tela
+    float chaoY      = ALTURA_TELA * 0.80f;
+    float platBaixaY = ALTURA_TELA * 0.67f;
+    float platAltaY  = ALTURA_TELA * 0.35f;
 
     // ================= PLATAFORMAS =================
-    Plataforma plataformas[] = {
+    Plataforma plataformas[3];
 
-        // chão fixo
-        {{0, 577, LARGURA_TELA, 300}, true, BROWN},
+    // chão — apenas colisão, não será desenhado
+    plataformas[0].area  = (Rectangle){0, chaoY, (float)LARGURA_TELA, (float)ALTURA_TELA};
+    plataformas[0].bloqueia = true;
+    plataformas[0].cor   = BROWN;
 
-        // plataforma baixa
-        {{1000, 480, 260, 40}, true, BROWN},
+    // plataforma baixa — entra da direita
+    plataformas[1].area  = (Rectangle){(float)LARGURA_TELA + 200, platBaixaY, 260, 40};
+    plataformas[1].bloqueia = true;
+    plataformas[1].cor   = BROWN;
 
-        // plataforma alta
-        {{1500, 250, 180, 40}, true, BROWN},
-    };
+    // plataforma alta — ainda mais à direita
+    plataformas[2].area  = (Rectangle){(float)LARGURA_TELA + 700, platAltaY, 180, 40};
+    plataformas[2].bloqueia = true;
+    plataformas[2].cor   = BROWN;
 
-    int qtdPlataformas = sizeof(plataformas) / sizeof(plataformas[0]);
+    int qtdPlataformas = 3;
 
-    // ================= MATRIZ DE SEQUÊNCIAS =================
-    // {altura Y, largura}
-
-    int sequencias[4][2] = {
-
-        {480, 260}, // baixa grande
-        {250, 180}, // alta média
-
-        {480, 180}, // baixa média
-        {250, 260}  // alta grande
+    // ================= SEQUÊNCIAS DE PLATAFORMAS =================
+    // {altura Y, largura} — usando os mesmos Y proporcionais
+    float sequencias[4][2] = {
+        {platBaixaY, 260},
+        {platAltaY,  180},
+        {platBaixaY, 180},
+        {platAltaY,  260}
     };
 
     int indiceSequencia = 0;
 
-    // controla onde a próxima plataforma vai nascer
-    float proximaPosicaoX = 1700;
-
     // ================= INIMIGO =================
     SpikeBall spike;
     InitSpike(&spike);
-
     float tempoInvulneravel = 0;
 
     // ================= TIROS =================
@@ -94,7 +98,6 @@ int main(void) {
 
             if (IsKeyPressed(KEY_ENTER) ||
                 IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-
                 estado = JOGO;
             }
         }
@@ -104,36 +107,22 @@ int main(void) {
 
             // -------- DISPARO --------
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-
                 Vector2 mouse = GetMousePosition();
-
                 DispararTiro(jogador.posicao, mouse);
             }
 
             // -------- ATUALIZAÇÕES --------
-            AtualizarJogador(
-                &jogador,
-                plataformas,
-                qtdPlataformas,
-                dt
-            );
-
-            AtualizarTiros(
-                dt,
-                LARGURA_TELA,
-                ALTURA_TELA
-            );
-
+            AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
+            AtualizarTiros(dt, LARGURA_TELA, ALTURA_TELA);
             UpdateSpike(&spike);
 
-            // -------- TEMPO DE INVULNERABILIDADE --------
+            // -------- INVULNERABILIDADE --------
             if (tempoInvulneravel > 0) {
                 tempoInvulneravel -= dt;
             }
 
             // -------- HITBOX DO JOGADOR --------
             Rectangle hitboxJogador = {
-
                 jogador.posicao.x - 50,
                 jogador.posicao.y - 50,
                 100,
@@ -145,59 +134,45 @@ int main(void) {
                 && tempoInvulneravel <= 0) {
 
                 jogador.vidas--;
-
                 tempoInvulneravel = 1.0f;
-
-                // reseta posição do inimigo
-                spike.position.x = LARGURA_TELA;
+                spike.position.x = (float)LARGURA_TELA;
             }
 
-            // ================= MOVIMENTO DAS PLATAFORMAS =================
-            // começa em 1 porque 0 é o chão
-
+            // -------- MOVIMENTO DAS PLATAFORMAS --------
             for (int i = 1; i < qtdPlataformas; i++) {
 
-                // move plataformas para esquerda
                 plataformas[i].area.x -= VELOCIDADE_MAPA * dt;
 
-                // quando sair totalmente da tela
-                if (plataformas[i].area.x +
-                    plataformas[i].area.width < 0) {
+                // saiu pela esquerda
+                if (plataformas[i].area.x + plataformas[i].area.width < 0) {
 
-                    // nasce depois da última
-                    plataformas[i].area.x = proximaPosicaoX;
+                    // maiorX começa em LARGURA_TELA para garantir que
+                    // a nova plataforma sempre nasça fora da tela
+                    float maiorX = (float)LARGURA_TELA;
 
-                    // pega altura da matriz
-                    plataformas[i].area.y =
-                        sequencias[indiceSequencia][0];
-
-                    // pega largura da matriz
-                    plataformas[i].area.width =
-                        sequencias[indiceSequencia][1];
-
-                    // distância entre plataformas
-                    proximaPosicaoX += 400;
-
-                    // próxima sequência
-                    indiceSequencia++;
-
-                    // reinicia sequência
-                    if (indiceSequencia >= 4) {
-                        indiceSequencia = 0;
+                    for (int j = 1; j < qtdPlataformas; j++) {
+                        if (j != i && plataformas[j].area.x > maiorX) {
+                            maiorX = plataformas[j].area.x;
+                        }
                     }
+
+                    plataformas[i].area.x     = maiorX + GetRandomValue(350, 500);
+                    plataformas[i].area.y     = sequencias[indiceSequencia][0];
+                    plataformas[i].area.width = sequencias[indiceSequencia][1];
+
+                    indiceSequencia++;
+                    if (indiceSequencia >= 4) indiceSequencia = 0;
                 }
             }
 
             // -------- GAME OVER --------
             if (jogador.vidas <= 0) {
-
                 estado = GAMEOVER;
             }
         }
 
         // ================= DESENHO =================
         BeginDrawing();
-
         ClearBackground(RAYWHITE);
 
         // ================= MENU =================
@@ -207,33 +182,22 @@ int main(void) {
                 texMenu,
                 (Rectangle){0, 0, texMenu.width, texMenu.height},
                 (Rectangle){0, 0, LARGURA_TELA, ALTURA_TELA},
-                (Vector2){0, 0},
-                0,
-                WHITE
+                (Vector2){0, 0}, 0, WHITE
             );
         }
 
         // ================= JOGO =================
         else if (estado == JOGO) {
 
-            // ================= CHÃO =================
-
-            // corpo do chão
-            DrawRectangleRec(plataformas[0].area, BROWN);
-
-
-            // -------- FUNDO --------
+            // 1) FUNDO — desenhado primeiro, cobre tudo
             DrawTexturePro(
                 texFundo,
                 (Rectangle){0, 0, texFundo.width, texFundo.height},
                 (Rectangle){0, 0, LARGURA_TELA, ALTURA_TELA},
-                (Vector2){0, 0},
-                0,
-                WHITE
+                (Vector2){0, 0}, 0, WHITE
             );
 
-
-            // ================= PLATAFORMAS =================
+            // 2) PLATAFORMAS FLUTUANTES — por cima do fundo
             for (int i = 1; i < qtdPlataformas; i++) {
 
                 Rectangle p = plataformas[i].area;
@@ -241,86 +205,48 @@ int main(void) {
                 // corpo principal
                 DrawRectangleRec(p, BROWN);
 
-                // borda clara
-                DrawRectangle(
-                    p.x,
-                    p.y,
-                    p.width,
-                    6,
-                    BEIGE
-                );
+                // borda clara no topo
+                DrawRectangle(p.x, p.y, p.width, 6, BEIGE);
 
-                // linhas verticais
+                // linhas verticais decorativas
                 for (int x = p.x; x < p.x + p.width; x += 40) {
-
-                    DrawLine(
-                        x,
-                        p.y,
-                        x,
-                        p.y + p.height,
-                        DARKBROWN
-                    );
+                    DrawLine(x, p.y, x, p.y + p.height, DARKBROWN);
                 }
 
-                // linha horizontal
+                // linha horizontal central
                 DrawLine(
-                    p.x,
-                    p.y + p.height / 2,
-                    p.x + p.width,
-                    p.y + p.height / 2,
+                    p.x, p.y + p.height / 2,
+                    p.x + p.width, p.y + p.height / 2,
                     DARKBROWN
                 );
             }
 
-            // ================= INIMIGO =================
+            // 3) INIMIGO
             DrawSpike(spike);
 
-            // ================= ANIMAÇÃO DO JOGADOR =================
+            // 4) ANIMAÇÃO DO JOGADOR
             Texture2D texAtual = texPrincesa;
 
             if (jogador.estado == JUMP) {
-
-                // subindo
-                if (jogador.velocidadeY < -50) {
-                    texAtual = jump[0];
-                }
-
-                // descendo
-                else if (jogador.velocidadeY > 50) {
-                    texAtual = jump[2];
-                }
-
-                // topo do pulo
-                else {
-                    texAtual = jump[1];
-                }
+                if      (jogador.velocidadeY < -50) texAtual = jump[0]; // subindo
+                else if (jogador.velocidadeY >  50) texAtual = jump[2]; // descendo
+                else                                texAtual = jump[1]; // topo
             }
 
-            // ================= JOGADOR =================
             DrawTexturePro(
                 texAtual,
                 (Rectangle){0, 0, texAtual.width, texAtual.height},
-                (Rectangle){
-                    jogador.posicao.x,
-                    jogador.posicao.y,
-                    100,
-                    100
-                },
-                (Vector2){50, 50},
-                0,
-                WHITE
+                (Rectangle){jogador.posicao.x, jogador.posicao.y, 100, 100},
+                (Vector2){50, 50}, 0, WHITE
             );
 
-            // ================= TIROS =================
+            // 5) TIROS
             DesenharTiros(texEstrela);
 
-            // ================= UI =================
+            // 6) UI
             DrawText(
                 TextFormat("Vidas: %d", jogador.vidas),
-                30,
-                30,
-                30,
-                RED
+                30, 30, 30, RED
             );
         }
 
@@ -329,23 +255,9 @@ int main(void) {
 
             DrawTexturePro(
                 texGameOver,
-                (Rectangle){
-                    0,
-                    0,
-                    texGameOver.width,
-                    texGameOver.height
-                },
-
-                (Rectangle){
-                    0,
-                    0,
-                    LARGURA_TELA,
-                    ALTURA_TELA
-                },
-
-                (Vector2){0, 0},
-                0,
-                WHITE
+                (Rectangle){0, 0, texGameOver.width, texGameOver.height},
+                (Rectangle){0, 0, LARGURA_TELA, ALTURA_TELA},
+                (Vector2){0, 0}, 0, WHITE
             );
         }
 
@@ -353,20 +265,15 @@ int main(void) {
     }
 
     // ================= FINALIZAÇÃO =================
-
     UnloadSpike(&spike);
-
     UnloadTexture(texFundo);
     UnloadTexture(texPrincesa);
     UnloadTexture(texEstrela);
     UnloadTexture(texMenu);
     UnloadTexture(texGameOver);
 
-    for (int i = 0; i < 3; i++) {
-        UnloadTexture(jump[i]);
-    }
+    for (int i = 0; i < 3; i++) UnloadTexture(jump[i]);
 
     CloseWindow();
-
     return 0;
 }
