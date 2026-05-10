@@ -23,11 +23,16 @@ int main(void) {
     // ── TELA CHEIA ────────────────────────────────────────────
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(0, 0, "Royal Rush");
+    InitAudioDevice();
 
     int LARGURA_TELA = GetScreenWidth();
     int ALTURA_TELA  = GetScreenHeight();
 
     EstadoJogo estado = MENU;
+
+    Music musica = LoadMusicStream("musicas/gameplay.ogg");
+    PlayMusicStream(musica);
+    SetMusicVolume(musica, 0.35f);
 
     // ── TEXTURAS ──────────────────────────────────────────────
     Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
@@ -97,6 +102,8 @@ int main(void) {
     // ── CONTADOR DE KILLS ─────────────────────────────────────
     int kills = 0;
 
+    
+
     SetTargetFPS(60);
 
     // ══════════════════════════════════════════════════════════
@@ -104,6 +111,7 @@ int main(void) {
     // ══════════════════════════════════════════════════════════
     while (!WindowShouldClose()) {
 
+        UpdateMusicStream(musica);
         float dt = GetFrameTime();
 
         // ── MENU ──────────────────────────────────────────────
@@ -114,7 +122,7 @@ int main(void) {
         }
         else if(estado == JOGO){
             
-            float dt = GetFrameTime();
+           
             timerTiro -= dt;
             
             // INPUT DE TIRO
@@ -343,6 +351,8 @@ int main(void) {
             // 6) UI — Vidas (canto superior esquerdo)
             DrawText(TextFormat("Vidas: %d", jogador.vidas), 30, 30, 30, RED);
 
+            DrawFPS(30, 70);
+
             // 7) UI — Contador de kills (canto superior direito)
             const char *textoKills = TextFormat("%d/%d", kills, META_KILLS);
             int larguraTexto = MeasureText(textoKills, 30);
@@ -369,6 +379,9 @@ int main(void) {
     UnloadTexture(texMenu);
     UnloadTexture(texGameOver);
     for (int i = 0; i < 3; i++) UnloadTexture(jump[i]);
+    UnloadMusicStream(musica);
+
+    CloseAudioDevice();
 
     CloseWindow();
     return 0;
