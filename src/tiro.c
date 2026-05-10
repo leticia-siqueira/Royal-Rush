@@ -18,6 +18,8 @@ void InitTiros(void) {
     }
 }
 
+
+
 void DispararTiro(Vector2 origem, Vector2 destino) {
     Vector2 direcao = {
         destino.x - origem.x,
@@ -37,6 +39,16 @@ void DispararTiro(Vector2 origem, Vector2 destino) {
             break;
         }
     }
+}
+
+int ContarTirosAtivos() {
+    int ativos = 0;
+
+    for (int i = 0; i < MAX_TIROS; i++) {
+        if (tiros[i].ativo) ativos++;
+    }
+
+    return ativos;
 }
 
 void AtualizarTiros(float dt, int largura, int altura) {

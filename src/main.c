@@ -91,6 +91,8 @@ int main(void) {
 
     // ── TIROS DO JOGADOR ──────────────────────────────────────
     InitTiros();
+    
+    float timerTiro = 0;
 
     // ── CONTADOR DE KILLS ─────────────────────────────────────
     int kills = 0;
@@ -110,14 +112,21 @@ int main(void) {
                 estado = JOGO;
             }
         }
+        else if(estado == JOGO){
+            
+            float dt = GetFrameTime();
+            timerTiro -= dt;
+            
+            // INPUT DE TIRO
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && timerTiro<= 0) {
 
-        // ── JOGO ──────────────────────────────────────────────
-        else if (estado == JOGO) {
+                int ativos = ContarTirosAtivos();
 
-            // Disparo do jogador
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                Vector2 mouse = GetMousePosition();
-                DispararTiro(jogador.posicao, mouse);
+                if(ativos < 5){
+                    Vector2 mouse = GetMousePosition();
+                    DispararTiro(jogador.posicao, mouse);
+                    timerTiro = 0.2f;
+                }
             }
 
             // Atualizações principais
