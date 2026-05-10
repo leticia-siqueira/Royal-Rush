@@ -12,6 +12,7 @@ void InitCogumelo(CogumeloRei *c, int largura, float chaoY) {
     c->posicao               = (Vector2){(float)largura + 80,
                                           chaoY - ALTURA_COGUMELO / 2.0f};
     c->textura = LoadTexture("imagens/cogumelo_rei.png");
+    c->vidas = 2;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -25,6 +26,7 @@ void UpdateCogumelo(CogumeloRei *c, int largura, float chaoY) {
             c->posicao = (Vector2){(float)largura + 80,
                                     chaoY - ALTURA_COGUMELO / 2.0f};
             c->ativo   = true;
+            c->vidas = 2;
         }
         return;
     }
@@ -50,6 +52,24 @@ void DrawCogumelo(CogumeloRei *c) {
         (Vector2){LARGURA_COGUMELO / 2.0f, ALTURA_COGUMELO / 2.0f},
         0.0f,
         WHITE
+    );
+
+        // fundo da barra
+        DrawRectangle(
+        c->posicao.x - 30,
+        c->posicao.y - 85,
+        60,
+        8,
+        DARKGRAY
+    );
+
+    // vida atual
+    DrawRectangle(
+        c->posicao.x - 30,
+        c->posicao.y - 85,
+        30 * c->vidas,
+        8,
+        RED
     );
 }
 

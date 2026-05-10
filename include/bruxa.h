@@ -22,6 +22,7 @@ typedef struct {
     int tirosDados;              // quantos tiros deu nesta aparição
     bool ativa;
     bool atirando;               // true = usar textura de ataque
+    int vidas;
 
     TiroBruxa tiros[MAX_TIROS_BRUXA];
 

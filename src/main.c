@@ -158,15 +158,30 @@ int main(void) {
                     bool tiroAtivo;
                     GetTiroRect(i, &tiroRect, &tiroAtivo);
                     if (tiroAtivo && CheckCollisionRecs(tiroRect, hitboxBruxa)) {
-                        // Mata a bruxa
-                        bruxa.ativa = false;
-                        bruxa.tempoCooldownAparicao = 4.0f;
-                        // Desativa o tiro que acertou
-                        DesativarTiro(i);
-                        kills++;
-                        if (kills > META_KILLS) kills = META_KILLS;
-                        break;
-                    }
+
+                            // remove 1 vida da bruxa
+                            bruxa.vidas--;
+
+                            // desativa o tiro que acertou
+                            DesativarTiro(i);
+
+                            // se a vida acabar
+                            if (bruxa.vidas <= 0) {
+
+                                bruxa.ativa = false;
+
+                                bruxa.tempoCooldownAparicao = 4.0f;
+
+                                // soma kill apenas quando realmente mata
+                                kills++;
+
+                                if (kills > META_KILLS) {
+                                    kills = META_KILLS;
+                                }
+                            }
+
+                            break;
+                        }
                 }
             }
 
@@ -183,11 +198,18 @@ int main(void) {
                     bool tiroAtivo;
                     GetTiroRect(i, &tiroRect, &tiroAtivo);
                     if (tiroAtivo && CheckCollisionRecs(tiroRect, hitboxCogumelo)) {
-                        cogumelo.ativo = false;
-                        cogumelo.tempoCooldownAparicao = 3.0f;
+
+                        cogumelo.vidas--;
                         DesativarTiro(i);
-                        kills++;
-                        if (kills > META_KILLS) kills = META_KILLS;
+
+                        if(cogumelo.vidas <= 0){
+
+                            cogumelo.ativo = false;
+                            cogumelo.tempoCooldownAparicao = 3.0f;
+                            DesativarTiro(i);
+                            kills++;
+                            if (kills > META_KILLS) kills = META_KILLS;
+                        }
                         break;
                     }
                 }

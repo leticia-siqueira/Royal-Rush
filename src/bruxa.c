@@ -23,6 +23,7 @@ void InitBruxa(Bruxa *b) {
     b->tempoAtirando        = 0.0f;
     b->tirosDados           = 0;
     b->tempoAnimAtaque = 0.0f;
+    b->vidas = 3;
 
     // Posição inicial fora da tela (direita, área aérea)
     b->posicao   = (Vector2){-200, 0};
@@ -54,6 +55,7 @@ void UpdateBruxa(Bruxa *b, Vector2 posJogador, int largura, int altura) {
             b->atirando      = false;
             b->tirosDados    = 0;
             b->tempoAtirando = 0.0f;
+            b->vidas = 3;
         }
         goto atualizar_tiros; 
     }
@@ -154,6 +156,24 @@ void DrawBruxa(Bruxa *b) {
         (Vector2){60, 60},                                   
         0.0f,
         WHITE
+    );
+
+    // fundo da barra
+    DrawRectangle(
+        b->posicao.x - 30,
+        b->posicao.y - 85,
+        60,
+        8,
+        DARKGRAY
+    );
+
+    // vida atual
+    DrawRectangle(
+        b->posicao.x - 30,
+        b->posicao.y - 85,
+        20 * b->vidas,
+        8,
+        RED
     );
 }
 

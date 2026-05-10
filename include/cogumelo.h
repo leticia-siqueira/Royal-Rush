@@ -10,6 +10,7 @@ typedef struct {
     bool ativo;
     float tempoCooldownAparicao;
     Texture2D textura;
+    int vidas;
 } CogumeloRei;
 
 void InitCogumelo(CogumeloRei *c, int largura, float chaoY);
