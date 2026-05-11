@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #define VELOCIDADE_MAPA     200
-#define META_KILLS          25   // objetivo da fase 1
+#define META_KILLS          15   // objetivo da fase 1
 
 extern void GetTiroRect(int index, Rectangle *out, bool *ativo);
 extern int  GetMaxTiros(void);
