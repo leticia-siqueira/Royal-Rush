@@ -20,7 +20,7 @@ typedef enum {
 
 int main(void) {
 
-    // ── TELA CHEIA ────────────────────────────────────────────
+    // TELA CHEIA 
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(0, 0, "Royal Rush");
     InitAudioDevice();
@@ -34,7 +34,7 @@ int main(void) {
     PlayMusicStream(musica);
     SetMusicVolume(musica, 0.35f);
 
-    // ── TEXTURAS ──────────────────────────────────────────────
+    // TEXTURAS
     Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
     Texture2D texFundo    = LoadTexture("imagens/fundo.png");
     Texture2D texEstrela  = LoadTexture("imagens/estrela.png");
@@ -46,17 +46,17 @@ int main(void) {
     jump[1] = LoadTexture("imagens/pulando2.png");
     jump[2] = LoadTexture("imagens/pulando3.png");
 
-    // ── JOGADOR ───────────────────────────────────────────────
+    //JOGADOR 
     Jogador jogador = {0};
     jogador.posicao = (Vector2){400, ALTURA_TELA * 0.30f};
     jogador.vidas   = 3;
 
-    // ── PROPORÇÕES VISUAIS ────────────────────────────────────
+    // ── PROPORÇÕES VISUAIS 
     float chaoY      = ALTURA_TELA * 0.80f;
     float platBaixaY = ALTURA_TELA * 0.67f;
     float platAltaY  = ALTURA_TELA * 0.35f;
 
-    // ── PLATAFORMAS ───────────────────────────────────────────
+    //PLATAFORMAS 
     Plataforma plataformas[4];
 
     plataformas[0].area     = (Rectangle){0, chaoY, (float)LARGURA_TELA, (float)ALTURA_TELA};
@@ -85,7 +85,7 @@ int main(void) {
     };
     int indiceSequencia = 0;
 
-    // ── INIMIGOS ──────────────────────────────────────────────
+    //INIMIGOS
     Bruxa     bruxa;
     CogumeloRei cogumelo;
 
@@ -94,27 +94,24 @@ int main(void) {
 
     float tempoInvulneravel = 0;
 
-    // ── TIROS DO JOGADOR ──────────────────────────────────────
+    //TIROS DO JOGADOR
     InitTiros();
     
     float timerTiro = 0;
 
-    // ── CONTADOR DE KILLS ─────────────────────────────────────
+    //CONTADOR DE KILLS
     int kills = 0;
-
-    
 
     SetTargetFPS(60);
 
-    // ══════════════════════════════════════════════════════════
     // LOOP PRINCIPAL
-    // ══════════════════════════════════════════════════════════
+
     while (!WindowShouldClose()) {
 
         UpdateMusicStream(musica);
         float dt = GetFrameTime();
 
-        // ── MENU ──────────────────────────────────────────────
+        // MENU
         if (estado == MENU) {
             if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 estado = JOGO;
@@ -153,7 +150,7 @@ int main(void) {
                 100, 100
             };
 
-            // ── COLISÃO TIROS DO JOGADOR → BRUXA ──────────────
+            // COLISÃO TIROS DO JOGADOR → BRUXA
             if (bruxa.ativa && kills < META_KILLS) {
                 Rectangle hitboxBruxa = {
                     bruxa.posicao.x - 75,
@@ -193,7 +190,7 @@ int main(void) {
                 }
             }
 
-            // ── COLISÃO TIROS DO JOGADOR → COGUMELO ───────────
+            //COLISÃO TIROS DO JOGADOR → COGUMELO
             if (cogumelo.ativo && kills < META_KILLS) {
                 Rectangle hitboxCogumelo = {
                     cogumelo.posicao.x - 35,
@@ -223,7 +220,7 @@ int main(void) {
                 }
             }
 
-            // ── COLISÃO JOGADOR → TIROS DA BRUXA ──────────────
+            // ── COLISÃO JOGADOR → TIROS DA BRUXA
             if (tempoInvulneravel <= 0) {
                 for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
                     if (!bruxa.tiros[i].ativo) continue;
@@ -241,7 +238,7 @@ int main(void) {
                 }
             }
 
-            // ── COLISÃO JOGADOR → COGUMELO ────────────────────
+            // COLISÃO JOGADOR → COGUMELO
             if (CheckCogumeloCollision(&cogumelo, hitboxJogador) && tempoInvulneravel <= 0) {
                 jogador.vidas--;
                 tempoInvulneravel = 1.0f;
@@ -249,7 +246,7 @@ int main(void) {
                 cogumelo.tempoCooldownAparicao = 3.0f;
             }
 
-            // ── COLISÃO JOGADOR → BRUXA ─────────────
+            // COLISÃO JOGADOR → BRUXA
             if (bruxa.ativa && tempoInvulneravel <= 0) {
                 Rectangle hitboxBruxa = {
                     bruxa.posicao.x - 60,
@@ -262,7 +259,7 @@ int main(void) {
                 }
             }
 
-            // ── PLATAFORMAS ───────────────────────────────────
+            // PLATAFORMAS
             for (int i = 1; i < qtdPlataformas; i++) {
                 plataformas[i].area.x -= VELOCIDADE_MAPA * dt;
 
@@ -280,13 +277,11 @@ int main(void) {
                 }
             }
 
-            // ── GAME OVER ─────────────────────────────────────
+            // GAME OVER
             if (jogador.vidas <= 0) estado = GAMEOVER;
         }
 
-        // ══════════════════════════════════════════════════════
         // DESENHO
-        // ══════════════════════════════════════════════════════
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -370,7 +365,7 @@ int main(void) {
         EndDrawing();
     }
 
-    // ── FINALIZAÇÃO ───────────────────────────────────────────
+    //FINALIZAÇÃO
     UnloadBruxa(&bruxa);
     UnloadCogumelo(&cogumelo);
     UnloadTexture(texFundo);
