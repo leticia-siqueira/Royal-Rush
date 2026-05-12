@@ -14,6 +14,7 @@ extern int  GetMaxTiros(void);
 
 typedef enum {
     MENU,
+    OBJETIVO,
     JOGO,
     GAMEOVER
 } EstadoJogo;
@@ -39,6 +40,7 @@ int main(void) {
     Texture2D texFundo    = LoadTexture("imagens/fundo.png");
     Texture2D texEstrela  = LoadTexture("imagens/estrela.png");
     Texture2D texMenu     = LoadTexture("imagens/menu.png");
+    Texture2D texObjetivo = LoadTexture("imagens/objetivo.png");
     Texture2D texGameOver = LoadTexture("imagens/GAMEOVER.png");
 
     Texture2D jump[3];
@@ -114,9 +116,18 @@ int main(void) {
         // MENU
         if (estado == MENU) {
             if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                estado = OBJETIVO;   // ← era JOGO
+            }
+        } 
+        
+        //OBJETIVO
+        else if (estado == OBJETIVO) {
+            if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 estado = JOGO;
             }
         }
+        
+        //JOGO
         else if(estado == JOGO){
             
            
@@ -280,6 +291,36 @@ int main(void) {
             // GAME OVER
             if (jogador.vidas <= 0) estado = GAMEOVER;
         }
+        
+        // GAMEOVER - Tentar novamente
+        else if (estado == GAMEOVER) {
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) || IsKeyPressed(KEY_ENTER)) {
+                // Resetar jogador
+                jogador.posicao      = (Vector2){400, ALTURA_TELA * 0.30f};
+                jogador.vidas        = 3;
+                jogador.velocidadeY  = 0;
+                jogador.podePular    = false;
+
+                // Resetar inimigos
+                InitBruxa(&bruxa);
+                InitCogumelo(&cogumelo, LARGURA_TELA, chaoY);
+
+                // Resetar tiros
+                InitTiros();
+
+                // Resetar contador
+                kills = 0;
+
+                // Resetar plataformas
+                plataformas[1].area.x = (float)LARGURA_TELA + 200;
+                plataformas[2].area.x = (float)LARGURA_TELA + 700;
+                plataformas[3].area.x = (float)LARGURA_TELA + 1200;
+                indiceSequencia = 0;
+
+                // Ir direto para o jogo
+                estado = JOGO;
+            }
+        }
 
         // DESENHO
         BeginDrawing();
@@ -289,6 +330,14 @@ int main(void) {
         if (estado == MENU) {
             DrawTexturePro(texMenu,
                 (Rectangle){0,0,texMenu.width,texMenu.height},
+                (Rectangle){0,0,LARGURA_TELA,ALTURA_TELA},
+                (Vector2){0,0}, 0, WHITE);
+        }
+        
+        // OBJETIVO
+        else if (estado == OBJETIVO) {
+            DrawTexturePro(texObjetivo,
+                (Rectangle){0,0,texObjetivo.width,texObjetivo.height},
                 (Rectangle){0,0,LARGURA_TELA,ALTURA_TELA},
                 (Vector2){0,0}, 0, WHITE);
         }
@@ -355,7 +404,7 @@ int main(void) {
         }
 
         // GAME OVER
-        else {
+        else if (estado == GAMEOVER) {
             DrawTexturePro(texGameOver,
                 (Rectangle){0,0,texGameOver.width,texGameOver.height},
                 (Rectangle){0,0,LARGURA_TELA,ALTURA_TELA},
@@ -372,6 +421,7 @@ int main(void) {
     UnloadTexture(texPrincesa);
     UnloadTexture(texEstrela);
     UnloadTexture(texMenu);
+    UnloadTexture(texObjetivo);
     UnloadTexture(texGameOver);
     for (int i = 0; i < 3; i++) UnloadTexture(jump[i]);
     UnloadMusicStream(musica);

@@ -1,8 +1,8 @@
 #include "bruxa.h"
 #include <math.h>
 
-#define INTERVALO_APARICAO_BRUXA 4.0f   // segundos entre aparições
-#define INTERVALO_TIRO_BRUXA     1.5f   // segundos entre tiros
+#define INTERVALO_APARICAO_BRUXA 2.7f   // segundos entre aparições
+#define INTERVALO_TIRO_BRUXA     1.8f   // segundos entre tiros
 #define VELOCIDADE_TIRO_BRUXA    280.0f
 #define VELOCIDADE_TIRO_ROTACAO  250.0f // giro visual do projétil
 
@@ -50,7 +50,7 @@ void UpdateBruxa(Bruxa *b, Vector2 posJogador, int largura, int altura) {
             float yAereo = (float)GetRandomValue((int)(altura * 0.15f),
                                                   (int)(altura * 0.45f));
             b->posicao       = (Vector2){(float)largura + 60, yAereo};
-            b->velocidade    = (Vector2){-120, 0};
+            b->velocidade    = (Vector2){-170, 0};
             b->ativa         = true;
             b->atirando      = false;
             b->tirosDados    = 0;

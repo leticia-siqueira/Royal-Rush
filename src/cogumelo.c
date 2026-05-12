@@ -1,6 +1,6 @@
 #include "cogumelo.h"
 
-#define INTERVALO_APARICAO_COGUMELO 3.0f // segundos entre aparições
+#define INTERVALO_APARICAO_COGUMELO 2.0f // segundos entre aparições
 #define LARGURA_COGUMELO 95
 #define ALTURA_COGUMELO  95
 
