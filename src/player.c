@@ -40,7 +40,7 @@ void AtualizarJogador(Jogador *jogador, Plataforma *plataformas, int qtd, float 
         float penetracaoEsquerda = (playerRect.x + playerRect.width) - p->area.x;
         float penetracaoDireita  = (p->area.x + p->area.width) - playerRect.x;
 
-        // Resolve pelo lado com MENOR penetração (o mais próximo)
+        // Resolve pelo lado com MENOR penetração 
         if (penetracaoCima <= penetracaoBaixo &&
             penetracaoCima <= penetracaoEsquerda &&
             penetracaoCima <= penetracaoDireita) {

@@ -6,16 +6,16 @@
 #define VELOCIDADE_TIRO_BRUXA    280.0f
 #define VELOCIDADE_TIRO_ROTACAO  250.0f // giro visual do projétil
 
-// ─────────────────────────────────────────────────────────────
+
 // Auxiliar: normaliza um vetor 2D
-// ─────────────────────────────────────────────────────────────
+
 static Vector2 NormalizarVetor(Vector2 v) {
     float len = sqrtf(v.x * v.x + v.y * v.y);
     if (len == 0) return (Vector2){1, 0};
     return (Vector2){v.x / len, v.y / len};
 }
 
-// ─────────────────────────────────────────────────────────────
+
 void InitBruxa(Bruxa *b) {
     b->ativa                = false;
     b->atirando             = false;
@@ -38,7 +38,7 @@ void InitBruxa(Bruxa *b) {
     b->texTiro    = LoadTexture("imagens/tiro_bruxa.png");
 }
 
-// ─────────────────────────────────────────────────────────────
+
 void UpdateBruxa(Bruxa *b, Vector2 posJogador, int largura, int altura) {
 
     float dt = GetFrameTime();
@@ -131,7 +131,7 @@ atualizar_tiros:;
 
 }
 
-// ─────────────────────────────────────────────────────────────
+
 void DrawBruxa(Bruxa *b) {
     for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
         if (!b->tiros[i].ativo) continue;
@@ -177,7 +177,7 @@ void DrawBruxa(Bruxa *b) {
     );
 }
 
-// ─────────────────────────────────────────────────────────────
+
 void UnloadBruxa(Bruxa *b) {
     UnloadTexture(b->texVoando);
     UnloadTexture(b->texAtirando);

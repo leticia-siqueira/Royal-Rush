@@ -4,7 +4,6 @@
 #define LARGURA_COGUMELO 95
 #define ALTURA_COGUMELO  95
 
-// ─────────────────────────────────────────────────────────────
 void InitCogumelo(CogumeloRei *c, int largura, float chaoY) {
     c->ativo                 = false;
     c->tempoCooldownAparicao = INTERVALO_APARICAO_COGUMELO;
@@ -15,7 +14,7 @@ void InitCogumelo(CogumeloRei *c, int largura, float chaoY) {
     c->vidas = 2;
 }
 
-// ─────────────────────────────────────────────────────────────
+
 void UpdateCogumelo(CogumeloRei *c, int largura, float chaoY) {
     float dt = GetFrameTime();
 
@@ -41,7 +40,7 @@ void UpdateCogumelo(CogumeloRei *c, int largura, float chaoY) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────
+
 void DrawCogumelo(CogumeloRei *c) {
     if (!c->ativo) return;
 
@@ -73,7 +72,7 @@ void DrawCogumelo(CogumeloRei *c) {
     );
 }
 
-// ─────────────────────────────────────────────────────────────
+
 bool CheckCogumeloCollision(CogumeloRei *c, Rectangle playerRect) {
     if (!c->ativo) return false;
 
@@ -87,7 +86,6 @@ bool CheckCogumeloCollision(CogumeloRei *c, Rectangle playerRect) {
     return CheckCollisionRecs(cogumeloRect, playerRect);
 }
 
-// ─────────────────────────────────────────────────────────────
 void UnloadCogumelo(CogumeloRei *c) {
     UnloadTexture(c->textura);
 }

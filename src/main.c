@@ -10,23 +10,31 @@
 #include <stdio.h>
 
 #define VELOCIDADE_MAPA 200
-#define META_KILLS 15
+#define META_KILLS 2
 #define PONTOS_BRUXA 150
 #define PONTOS_COGUMELO 100
 #define PONTOS_BOSS 1000
 #define PONTOS_DANO_BOSS 25
 #define PENALIDADE_DANO 50
 
+// ALTERAÇÃO
+#define TEMPO_TRANSICAO_BOSS 4.5f
+#define TEMPO_SPAWN_BOSS 2.0f
+
+extern void GetTiroRect(int index, Rectangle *out, bool *ativo);
+extern int GetMaxTiros(void);
+
 typedef enum {
-    MENU,
-    NOME,
-    OBJETIVO,
-    JOGO,
-    GAMEOVER,
-    YOUWIN
+        MENU, 
+        NOME, 
+        OBJETIVO, 
+        JOGO, 
+        GAMEOVER,
+        YOUWIN 
 } EstadoJogo;
 
 int main(void) {
+
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(0, 0, "Royal Rush");
     InitAudioDevice();
@@ -37,11 +45,18 @@ int main(void) {
     EstadoJogo estado = MENU;
 
     Music musica = LoadMusicStream("musicas/gameplay.ogg");
+    Music musicaBoss = LoadMusicStream("musicas/boss.ogg"); 
+    Music musicawin = LoadMusicStream("musicas/vitoria.ogg");
+    Music musicawin = LoadMusicStream("musicas/derrota.ogg");
+
+
     PlayMusicStream(musica);
     SetMusicVolume(musica, 0.35f);
+    SetMusicVolume(musicaBoss, 0.35f); // ALTERAÇÃO
 
     Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
     Texture2D texFundo = LoadTexture("imagens/fundo.png");
+    Texture2D texFundoBoss = LoadTexture("imagens/fundo_boss.png"); // ALTERAÇÃO
     Texture2D texEstrela = LoadTexture("imagens/estrela.png");
     Texture2D texMenu = LoadTexture("imagens/menu.png");
     Texture2D texObjetivo = LoadTexture("imagens/objetivo.png");
@@ -60,11 +75,14 @@ int main(void) {
     jogador.podePular = false;
 
     float chaoY = ALTURA_TELA * 0.80f;
+
+    //Duas alturas possíveis das plataformas
     float platBaixaY = ALTURA_TELA * 0.67f;
     float platAltaY = ALTURA_TELA * 0.35f;
 
     Plataforma plataformas[4];
 
+    //chão
     plataformas[0].area = (Rectangle){0, chaoY, (float)LARGURA_TELA, (float)ALTURA_TELA};
     plataformas[0].bloqueia = true;
     plataformas[0].cor = BROWN;
@@ -83,6 +101,7 @@ int main(void) {
 
     int qtdPlataformas = 4;
 
+    //cada linha guarda o Y e a largura da plataforma
     float sequencias[4][2] = {
         {platBaixaY, 260},
         {platAltaY, 180},
@@ -104,6 +123,11 @@ int main(void) {
     bool modoBoss = false;
     bool bossCriado = false;
 
+    // ALTERAÇÃO
+    bool transicaoBoss = false;
+    float tempoTransicaoBoss = 0.0f;
+    bool musicaBossAtiva = false;
+
     float tempoInvulneravel = 0;
 
     InitTiros();
@@ -119,7 +143,14 @@ int main(void) {
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-        UpdateMusicStream(musica);
+        
+        // ALTERAÇÃO
+        if (!musicaBossAtiva) {
+            UpdateMusicStream(musica);
+        } else {
+            UpdateMusicStream(musicaBoss);
+        }
+
         float dt = GetFrameTime();
 
         if (estado == MENU) {
@@ -160,18 +191,49 @@ int main(void) {
         else if (estado == JOGO) {
             timerTiro -= dt;
 
-            if (kills >= META_KILLS && !modoBoss) {
-                modoBoss = true;
+            // ALTERAÇÃO
+            if (kills >= META_KILLS && !modoBoss && !transicaoBoss) {
+                transicaoBoss = true;
+                tempoTransicaoBoss = 0.0f;
 
                 bruxa.ativa = false;
                 cogumelo.ativo = false;
 
-                InitBoss(&boss, LARGURA_TELA, ALTURA_TELA);
-                bossCriado = true;
+                StopMusicStream(musica);
+                PlayMusicStream(musicaBoss);
+                musicaBossAtiva = true;
+            }
 
-                spike.active = true;
-                spike.position.x = LARGURA_TELA + 250;
-                spike.position.y = GetRandomValue((int)(ALTURA_TELA * 0.25f), (int)(ALTURA_TELA * 0.75f));
+            // ALTERAÇÃO
+            if (transicaoBoss) {
+                tempoTransicaoBoss += dt;
+
+                if (tempoTransicaoBoss >= TEMPO_SPAWN_BOSS && !bossCriado) {
+                    
+
+                    InitBoss(&boss, LARGURA_TELA, ALTURA_TELA);
+
+                
+                    boss.posicao.x = LARGURA_TELA + 150;
+
+                    bossCriado = true;
+
+                    spike.active = true;
+                    spike.position.x = LARGURA_TELA + 250;
+                    spike.position.y = GetRandomValue(
+                        (int)(ALTURA_TELA * 0.25f),
+                        (int)(ALTURA_TELA * 0.75f)
+                    );
+                }
+
+                if (bossCriado && boss.posicao.x > LARGURA_TELA * 0.90f) {
+                    boss.posicao.x -= 120 * dt;
+                }
+
+                if (tempoTransicaoBoss >= TEMPO_TRANSICAO_BOSS) {
+                    transicaoBoss = false;
+                    modoBoss = true;
+                }
             }
 
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && timerTiro <= 0) {
@@ -185,10 +247,11 @@ int main(void) {
             AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
             AtualizarTiros(dt, LARGURA_TELA, ALTURA_TELA);
 
-            if (!modoBoss) {
+            // ALTERAÇÃO: durante a transição não atualiza os inimigos normais
+            if (!modoBoss && !transicaoBoss) {
                 UpdateBruxa(&bruxa, jogador.posicao, LARGURA_TELA, ALTURA_TELA);
                 UpdateCogumelo(&cogumelo, LARGURA_TELA, chaoY);
-            } else {
+            } else if (modoBoss) {
                 UpdateBoss(&boss, jogador.posicao, LARGURA_TELA, ALTURA_TELA);
                 UpdateSpikeAleatorio(&spike, LARGURA_TELA, ALTURA_TELA);
             }
@@ -204,7 +267,8 @@ int main(void) {
                 100
             };
 
-            if (!modoBoss) {
+            // ALTERAÇÃO: colisões normais só antes da transição
+            if (!modoBoss && !transicaoBoss) {
                 if (bruxa.ativa && kills < META_KILLS) {
                     Rectangle hitboxBruxa = {
                         bruxa.posicao.x - 75,
@@ -271,7 +335,6 @@ int main(void) {
                     }
                 }
             }
-
             else {
                 if (bossCriado && boss.ativo) {
                     Rectangle bossRect = GetBossRect(&boss);
@@ -290,7 +353,7 @@ int main(void) {
                         }
                     }
 
-                    if (BossFoiDerrotado(&boss)) {
+                    if (!transicaoBoss && BossFoiDerrotado(&boss)) {
                         score += PONTOS_BOSS;
 
                         if (!rankingSalvo) {
@@ -353,8 +416,7 @@ int main(void) {
                         }
                     }
                 }
-
-                else {
+                else if (!transicaoBoss) {
                     if (CheckBossTirosCollision(&boss, hitboxJogador)) {
                         jogador.vidas--;
                         score -= PENALIDADE_DANO;
@@ -377,19 +439,28 @@ int main(void) {
             }
 
             for (int i = 1; i < qtdPlataformas; i++) {
+
                 plataformas[i].area.x -= VELOCIDADE_MAPA * dt;
 
+                //Verifica se a plataforma saiu completamente da tela
+                //Não destruimos a plataforma, ao invés disso reciclamos
                 if (plataformas[i].area.x + plataformas[i].area.width < 0) {
+
                     float maiorX = (float)LARGURA_TELA;
 
                     for (int j = 1; j < qtdPlataformas; j++) {
+
                         if (j != i && plataformas[j].area.x > maiorX) {
                             maiorX = plataformas[j].area.x;
                         }
                     }
 
                     plataformas[i].area.x = maiorX + GetRandomValue(350, 500);
+
+                    //Pega a altura da sequência atual, e colocano Y da plataforma
                     plataformas[i].area.y = sequencias[indiceSequencia][0];
+
+                    //Pega a largura da sequência atual e coloca na largura da plataforma
                     plataformas[i].area.width = sequencias[indiceSequencia][1];
 
                     indiceSequencia++;
@@ -427,7 +498,15 @@ int main(void) {
                 InitTiros();
 
                 modoBoss = false;
+                transicaoBoss = false; // ALTERAÇÃO
+                tempoTransicaoBoss = 0.0f; // ALTERAÇÃO
                 spike.active = false;
+
+                if (musicaBossAtiva) { // ALTERAÇÃO
+                    StopMusicStream(musicaBoss);
+                    PlayMusicStream(musica);
+                    musicaBossAtiva = false;
+                }
 
                 kills = 0;
                 score = 0;
@@ -489,9 +568,12 @@ int main(void) {
         }
 
         else if (estado == JOGO) {
+            // ALTERAÇÃO: fundo do boss durante a transição também
+            Texture2D fundoAtual = (modoBoss || transicaoBoss) ? texFundoBoss : texFundo;
+
             DrawTexturePro(
-                texFundo,
-                (Rectangle){0, 0, texFundo.width, texFundo.height},
+                fundoAtual,
+                (Rectangle){0, 0, fundoAtual.width, fundoAtual.height},
                 (Rectangle){0, 0, LARGURA_TELA, ALTURA_TELA},
                 (Vector2){0, 0},
                 0,
@@ -530,10 +612,12 @@ int main(void) {
                 }
             }
 
-            if (!modoBoss) {
+            // ALTERAÇÃO
+            if (!modoBoss && !transicaoBoss) {
                 DrawBruxa(&bruxa);
                 DrawCogumelo(&cogumelo);
-            } else {
+            }
+            else if (bossCriado) {
                 DrawBoss(&boss);
                 DrawSpike(spike);
             }
@@ -576,6 +660,34 @@ int main(void) {
 
             if (modoBoss) {
                 DrawText("BOSS FINAL!", LARGURA_TELA / 2 - 110, 30, 30, RED);
+            }
+
+            // ALTERAÇÃO: texto simples de transição
+            if (transicaoBoss) {
+                float alpha = 1.0f;
+
+                if (tempoTransicaoBoss < TEMPO_SPAWN_BOSS) {
+                    alpha = tempoTransicaoBoss / TEMPO_SPAWN_BOSS;
+                }
+
+                if (alpha > 1.0f) alpha = 1.0f;
+                if (alpha < 0.0f) alpha = 0.0f;
+
+                DrawRectangle(
+                    0,
+                    0,
+                    LARGURA_TELA,
+                    ALTURA_TELA,
+                    (Color){0, 0, 0, (unsigned char)(alpha * 160)}
+                );
+
+                DrawText(
+                    "O BOSS ESTA CHEGANDO...",
+                    LARGURA_TELA / 2 - 250,
+                    ALTURA_TELA / 2 - 30,
+                    36,
+                    WHITE
+                );
             }
         }
 
@@ -639,6 +751,7 @@ int main(void) {
     UnloadSpike(&spike);
 
     UnloadTexture(texFundo);
+    UnloadTexture(texFundoBoss); // ALTERAÇÃO
     UnloadTexture(texPrincesa);
     UnloadTexture(texEstrela);
     UnloadTexture(texMenu);
@@ -651,9 +764,10 @@ int main(void) {
     }
 
     UnloadMusicStream(musica);
+    UnloadMusicStream(musicaBoss); // ALTERAÇÃO
     CloseAudioDevice();
+    LiberarRanking();
     CloseWindow();
 
     return 0;
 }
-
