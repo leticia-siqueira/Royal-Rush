@@ -121,7 +121,6 @@ int main(void) {
     bool modoBoss = false;
     bool bossCriado = false;
 
-    // ALTERAÇÃO
     bool transicaoBoss = false;
     float tempoTransicaoBoss = 0.0f;
     bool musicaBossAtiva = false;
@@ -142,7 +141,7 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         
-        // ALTERAÇÃO
+        
         if (!musicaBossAtiva) {
             UpdateMusicStream(musica);
         } else {
@@ -189,7 +188,7 @@ int main(void) {
         else if (estado == JOGO) {
             timerTiro -= dt;
 
-            // ALTERAÇÃO
+            // Se o player bateu a meta de kills e não estamos em nenhuma fase do BOSS
             if (kills >= META_KILLS && !modoBoss && !transicaoBoss) {
                 transicaoBoss = true;
                 tempoTransicaoBoss = 0.0f;
@@ -202,21 +201,26 @@ int main(void) {
                 musicaBossAtiva = true;
             }
 
-            // ALTERAÇÃO
+            //Faz a transiçaõ para o surgimento do boss
             if (transicaoBoss) {
+
+                //vai contanto o tempo
                 tempoTransicaoBoss += dt;
 
+                //Se esse tempo passar do tempo esperado para o BOSS surgir, então iniciamos o BOSS
                 if (tempoTransicaoBoss >= TEMPO_SPAWN_BOSS && !bossCriado) {
                     
 
                     InitBoss(&boss, LARGURA_TELA, ALTURA_TELA);
 
-                
+                    
+                    //Boss começa fora da tela, para ter um efeituzinho de surgimento
                     boss.posicao.x = LARGURA_TELA + 150;
 
                     bossCriado = true;
 
                     spike.active = true;
+                    //sempre surge fora da tela
                     spike.position.x = LARGURA_TELA + 250;
                     spike.position.y = GetRandomValue(
                         (int)(ALTURA_TELA * 0.25f),
@@ -224,7 +228,10 @@ int main(void) {
                     );
                 }
 
+                //verifica se o boss foi criado e se não está na posição desejada ainda
                 if (bossCriado && boss.posicao.x > LARGURA_TELA * 0.90f) {
+
+                    //andamos com ele
                     boss.posicao.x -= 120 * dt;
                 }
 
@@ -235,10 +242,13 @@ int main(void) {
             }
 
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && timerTiro <= 0) {
+
                 if (ContarTirosAtivos() < 5) {
+
                     Vector2 mouse = GetMousePosition();
                     DispararTiro(jogador.posicao, mouse);
                     timerTiro = 0.2f;
+
                 }
             }
 
@@ -246,10 +256,14 @@ int main(void) {
             AtualizarTiros(dt, LARGURA_TELA, ALTURA_TELA);
 
             // ALTERAÇÃO: durante a transição não atualiza os inimigos normais
+            //Se não estamos em nenhuma fase do Boss então os inimigos normais são atualizados
             if (!modoBoss && !transicaoBoss) {
+
                 UpdateBruxa(&bruxa, jogador.posicao, LARGURA_TELA, ALTURA_TELA);
                 UpdateCogumelo(&cogumelo, LARGURA_TELA, chaoY);
+
             } else if (modoBoss) {
+                
                 UpdateBoss(&boss, jogador.posicao, LARGURA_TELA, ALTURA_TELA);
                 UpdateSpikeAleatorio(&spike, LARGURA_TELA, ALTURA_TELA);
             }
@@ -258,6 +272,8 @@ int main(void) {
                 tempoInvulneravel -= dt;
             }
 
+            //Subtraimos por 50 pois o personagem é desenhado centralizado, então a posição representa o centro, 
+            //mas rectangle usa canto superior esquerdo
             Rectangle hitboxJogador = {
                 jogador.posicao.x - 50,
                 jogador.posicao.y - 50,
@@ -267,6 +283,7 @@ int main(void) {
 
             // ALTERAÇÃO: colisões normais só antes da transição
             if (!modoBoss && !transicaoBoss) {
+
                 if (bruxa.ativa && kills < META_KILLS) {
                     Rectangle hitboxBruxa = {
                         bruxa.posicao.x - 75,
@@ -276,12 +293,14 @@ int main(void) {
                     };
 
                     for (int i = 0; i < GetMaxTiros(); i++) {
+
                         Rectangle tiroRect;
                         bool tiroAtivo;
 
                         GetTiroRect(i, &tiroRect, &tiroAtivo);
 
                         if (tiroAtivo && CheckCollisionRecs(tiroRect, hitboxBruxa)) {
+
                             bruxa.vidas--;
                             DesativarTiro(i);
 
@@ -301,6 +320,7 @@ int main(void) {
                 }
 
                 if (cogumelo.ativo && kills < META_KILLS) {
+
                     Rectangle hitboxCogumelo = {
                         cogumelo.posicao.x - 35,
                         cogumelo.posicao.y - 35,
@@ -309,6 +329,7 @@ int main(void) {
                     };
 
                     for (int i = 0; i < GetMaxTiros(); i++) {
+
                         Rectangle tiroRect;
                         bool tiroAtivo;
 
@@ -334,16 +355,20 @@ int main(void) {
                 }
             }
             else {
+
                 if (bossCriado && boss.ativo) {
+
                     Rectangle bossRect = GetBossRect(&boss);
 
                     for (int i = 0; i < GetMaxTiros(); i++) {
+
                         Rectangle tiroRect;
                         bool tiroAtivo;
 
                         GetTiroRect(i, &tiroRect, &tiroAtivo);
 
                         if (tiroAtivo && CheckCollisionRecs(tiroRect, bossRect)) {
+
                             BossReceberDano(&boss, 1);
                             DesativarTiro(i);
                             score += PONTOS_DANO_BOSS;
@@ -352,6 +377,7 @@ int main(void) {
                     }
 
                     if (!transicaoBoss && BossFoiDerrotado(&boss)) {
+
                         score += PONTOS_BOSS;
 
                         if (!rankingSalvo) {
@@ -365,7 +391,9 @@ int main(void) {
             }
 
             if (tempoInvulneravel <= 0) {
+
                 if (!modoBoss) {
+
                     for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
                         if (!bruxa.tiros[i].ativo) continue;
 
@@ -415,6 +443,7 @@ int main(void) {
                     }
                 }
                 else if (!transicaoBoss) {
+
                     if (CheckBossTirosCollision(&boss, hitboxJogador)) {
                         jogador.vidas--;
                         score -= PENALIDADE_DANO;
@@ -480,6 +509,7 @@ int main(void) {
         }
 
         else if (estado == GAMEOVER || estado == YOUWIN) {
+
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) || IsKeyPressed(KEY_ENTER)) {
                 jogador.posicao = (Vector2){400, ALTURA_TELA * 0.30f};
                 jogador.vidas = 3;
@@ -496,8 +526,8 @@ int main(void) {
                 InitTiros();
 
                 modoBoss = false;
-                transicaoBoss = false; // ALTERAÇÃO
-                tempoTransicaoBoss = 0.0f; // ALTERAÇÃO
+                transicaoBoss = false; 
+                tempoTransicaoBoss = 0.0f; 
                 spike.active = false;
 
                 if (musicaBossAtiva) { // ALTERAÇÃO
@@ -519,14 +549,16 @@ int main(void) {
 
                 indiceSequencia = 0;
 
-                estado = NOME;
+                estado = JOGO;
             }
         }
 
+        //Inicio da parte dos desenhos:
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
         if (estado == MENU) {
+
             DrawTexturePro(
                 texMenu,
                 (Rectangle){0, 0, texMenu.width, texMenu.height},
@@ -538,6 +570,7 @@ int main(void) {
         }
 
         else if (estado == NOME) {
+
             DrawTexturePro(
                 texMenu,
                 (Rectangle){0, 0, texMenu.width, texMenu.height},
@@ -555,6 +588,7 @@ int main(void) {
         }
 
         else if (estado == OBJETIVO) {
+
             DrawTexturePro(
                 texObjetivo,
                 (Rectangle){0, 0, texObjetivo.width, texObjetivo.height},
@@ -566,6 +600,7 @@ int main(void) {
         }
 
         else if (estado == JOGO) {
+
             // ALTERAÇÃO: fundo do boss durante a transição também
             Texture2D fundoAtual = (modoBoss || transicaoBoss) ? texFundoBoss : texFundo;
 
@@ -584,6 +619,7 @@ int main(void) {
 
                 DrawRectangleRec(p, (Color){100, 35, 10, 255});
 
+                //Faz os desenhos das listras dos blocos
                 for (int linha = 0; linha < 2; linha++) {
                     int deslocamento = (linha % 2 == 0) ? 0 : 20;
                     int y = p.y + linha * alturaTijolo;
@@ -610,7 +646,7 @@ int main(void) {
                 }
             }
 
-            // ALTERAÇÃO
+            //Se não estamos numa das fases do boss, então desenhamos apenas os inimigos
             if (!modoBoss && !transicaoBoss) {
                 DrawBruxa(&bruxa);
                 DrawCogumelo(&cogumelo);
@@ -622,12 +658,17 @@ int main(void) {
 
             Texture2D texAtual = texPrincesa;
 
+            //Controle das animações da princesa
+            //Obs: não fizemos com zero, porque na altura máxima do pulo, a animação ficaria bugada
             if (jogador.estado == JUMP) {
+
                 if (jogador.velocidadeY < -50) {
                     texAtual = jump[0];
-                } else if (jogador.velocidadeY > 50) {
+                } 
+                else if (jogador.velocidadeY > 50) {
                     texAtual = jump[2];
-                } else {
+                }
+                else {
                     texAtual = jump[1];
                 }
             }
@@ -660,7 +701,7 @@ int main(void) {
                 DrawText("BOSS FINAL!", LARGURA_TELA / 2 - 110, 30, 30, RED);
             }
 
-            // ALTERAÇÃO: texto simples de transição
+            //texto simples de transição e escurecimento gradual da tela
             if (transicaoBoss) {
                 float alpha = 1.0f;
 
@@ -690,6 +731,7 @@ int main(void) {
         }
 
         else if (estado == GAMEOVER) {
+            
             DrawTexturePro(
                 texGameOver,
                 (Rectangle){0, 0, texGameOver.width, texGameOver.height},
