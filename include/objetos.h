@@ -13,6 +13,7 @@ typedef struct {
 
 void InitSpike(SpikeBall *spike);
 void UpdateSpike(SpikeBall *spike);
+void UpdateSpikeAleatorio(SpikeBall *spike, int largura, int altura);
 void DrawSpike(SpikeBall spike);
 bool CheckSpikeCollision(SpikeBall spike, Rectangle playerRect);
 void UnloadSpike(SpikeBall *spike);
