@@ -35,12 +35,22 @@ void SalvarRanking(const char *nome, int score) {
 
     else {
         NoRanking *atual = inicio;
+        NoRanking *anterior = NULL;
 
-        while (atual->prox != NULL) {
+        while (atual!= NULL && atual->score > score) {
+            anterior = atual;
             atual = atual->prox;
         }
 
-        atual->prox = novo;
+        if(anterior == NULL){
+            novo->prox = inicio;
+            inicio = novo;
+        }
+        else{
+            anterior->prox = novo;
+            novo->prox = atual;
+        }
+
     }
 
 
