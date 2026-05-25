@@ -46,13 +46,11 @@ int main(void) {
 
     Music musica = LoadMusicStream("musicas/gameplay.ogg");
     Music musicaBoss = LoadMusicStream("musicas/boss.ogg"); 
-    Music musicawin = LoadMusicStream("musicas/vitoria.ogg");
-    Music musicawin = LoadMusicStream("musicas/derrota.ogg");
 
 
     PlayMusicStream(musica);
     SetMusicVolume(musica, 0.35f);
-    SetMusicVolume(musicaBoss, 0.35f); // ALTERAÇÃO
+    SetMusicVolume(musicaBoss, 0.35f); 
 
     Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
     Texture2D texFundo = LoadTexture("imagens/fundo.png");
