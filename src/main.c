@@ -193,6 +193,7 @@ int main(void) {
                 transicaoBoss = true;
                 tempoTransicaoBoss = 0.0f;
 
+                jogador.vidas = 3;
                 bruxa.ativa = false;
                 cogumelo.ativo = false;
 

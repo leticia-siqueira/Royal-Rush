@@ -3,7 +3,7 @@
 
 #define INTERVALO_APARICAO_BRUXA 2.7f   // segundos entre aparições
 #define INTERVALO_TIRO_BRUXA     1.8f   // segundos entre tiros
-#define VELOCIDADE_TIRO_BRUXA    280.0f
+#define VELOCIDADE_TIRO_BRUXA    280.0f // velocidade do projétil
 #define VELOCIDADE_TIRO_ROTACAO  250.0f // giro visual do projétil
 
 
