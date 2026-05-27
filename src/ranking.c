@@ -4,57 +4,73 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Ponteiro para o início da lista
 static NoRanking *inicio = NULL;
+static int rankingCarregado = 0;
 
-void SalvarRanking(const char *nome, int score) {
-
-
-//Cria um novo nó
-
+static void InserirRankingNaLista(const char *nome, int score) {
     NoRanking *novo = malloc(sizeof(NoRanking));
 
-    // Verifica se a memória foi alocada
     if (novo == NULL) {
-        printf("Erro ao alocar memória!\n");
+        printf("Erro ao alocar memoria!\n");
         return;
     }
 
-
-//Preenche os dados
-
-    strcpy(novo->nome, nome);
-
+    strncpy(novo->nome, nome, 29);
+    novo->nome[29] = '\0';
     novo->score = score;
-
     novo->prox = NULL;
 
-    if (inicio == NULL) {
+    if (inicio == NULL || score > inicio->score) {
+        novo->prox = inicio;
         inicio = novo;
+        return;
     }
 
-    else {
-        NoRanking *atual = inicio;
-        NoRanking *anterior = NULL;
+    NoRanking *atual = inicio;
 
-        while (atual!= NULL && atual->score > score) {
-            anterior = atual;
-            atual = atual->prox;
-        }
-
-        if(anterior == NULL){
-            novo->prox = inicio;
-            inicio = novo;
-        }
-        else{
-            anterior->prox = novo;
-            novo->prox = atual;
-        }
-
+    while (atual->prox != NULL && atual->prox->score >= score) {
+        atual = atual->prox;
     }
 
+    novo->prox = atual->prox;
+    atual->prox = novo;
+}
 
-// Salva no arquivo
+static void CarregarRankingDoArquivo(void) {
+    if (rankingCarregado) return;
+
+    FILE *arquivo = fopen("ranking.txt", "r");
+
+    if (arquivo == NULL) {
+        rankingCarregado = 1;
+        return;
+    }
+
+    char linha[100];
+    char nome[30];
+    int score;
+
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+        if (sscanf(linha, "%29[^-] - Score: %d", nome, &score) == 2) {
+            int tam = strlen(nome);
+
+            while (tam > 0 && nome[tam - 1] == ' ') {
+                nome[tam - 1] = '\0';
+                tam--;
+            }
+
+            InserirRankingNaLista(nome, score);
+        }
+    }
+
+    fclose(arquivo);
+    rankingCarregado = 1;
+}
+
+void SalvarRanking(const char *nome, int score) {
+    CarregarRankingDoArquivo();
+
+    InserirRankingNaLista(nome, score);
 
     FILE *arquivo = fopen("ranking.txt", "w");
 
@@ -63,36 +79,26 @@ void SalvarRanking(const char *nome, int score) {
         return;
     }
 
-
     NoRanking *atual = inicio;
 
     while (atual != NULL) {
-
-        fprintf(
-            arquivo,
-            "%s - Score: %d\n",
-            atual->nome,
-            atual->score
-        );
-
+        fprintf(arquivo, "%s - Score: %d\n", atual->nome, atual->score);
         atual = atual->prox;
     }
 
     fclose(arquivo);
 }
 
-void LiberarRanking() {
-
+void LiberarRanking(void) {
     NoRanking *atual = inicio;
 
     while (atual != NULL) {
-
         NoRanking *temp = atual;
-
         atual = atual->prox;
-
         free(temp);
     }
 
     inicio = NULL;
+    rankingCarregado = 0;
 }
+

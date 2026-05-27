@@ -17,24 +17,133 @@
 #define PONTOS_DANO_BOSS 25
 #define PENALIDADE_DANO 50
 
-// ALTERAÇÃO
 #define TEMPO_TRANSICAO_BOSS 4.5f
 #define TEMPO_SPAWN_BOSS 2.0f
 
-extern void GetTiroRect(int index, Rectangle *out, bool *ativo);
-extern int GetMaxTiros(void);
-
 typedef enum {
-        MENU, 
-        NOME, 
-        OBJETIVO, 
-        JOGO, 
-        GAMEOVER,
-        YOUWIN 
+    MENU,
+    NOME,
+    OBJETIVO,
+    JOGO,
+    GAMEOVER,
+    YOUWIN,
+    RANKING
 } EstadoJogo;
 
-int main(void) {
+static Rectangle GetBotaoRanking(int larguraTela, int alturaTela) {
+    return (Rectangle){
+        larguraTela - 320,
+        alturaTela - 90,
+        280,
+        60
+    };
+}
 
+static void DesenharBotaoRanking(int larguraTela, int alturaTela) {
+    Rectangle botaoRanking = GetBotaoRanking(larguraTela, alturaTela);
+
+    DrawRectangleRounded(botaoRanking, 0.25f, 10, (Color){255, 80, 160, 255});
+    DrawRectangleRoundedLines(botaoRanking, 0.25f, 10, GOLD);
+
+    const char *texto = "RANKING";
+    int larguraTexto = MeasureText(texto, 34);
+
+    DrawText(
+        texto,
+        botaoRanking.x + botaoRanking.width / 2 - larguraTexto / 2,
+        botaoRanking.y + 13,
+        34,
+        WHITE
+    );
+}
+
+static void DesenharTelaRanking(Texture2D fundo, int larguraTela, int alturaTela) {
+    DrawTexturePro(
+        fundo,
+        (Rectangle){0, 0, fundo.width, fundo.height},
+        (Rectangle){0, 0, larguraTela, alturaTela},
+        (Vector2){0, 0},
+        0,
+        WHITE
+    );
+
+    DrawRectangle(
+        larguraTela / 2 - 400,
+        alturaTela / 2 - 270,
+        800,
+        540,
+        (Color){255, 230, 220, 240}
+    );
+
+    DrawRectangleLinesEx(
+        (Rectangle){larguraTela / 2 - 400, alturaTela / 2 - 270, 800, 540},
+        5,
+        GOLD
+    );
+
+    const char *titulo = "RANKING";
+    int larguraTitulo = MeasureText(titulo, 58);
+
+    DrawText(
+        titulo,
+        larguraTela / 2 - larguraTitulo / 2,
+        alturaTela / 2 - 235,
+        58,
+        (Color){255, 70, 170, 255}
+    );
+
+    FILE *arquivo = fopen("ranking.txt", "r");
+
+    int y = alturaTela / 2 - 145;
+    int posicao = 1;
+
+    if (arquivo == NULL) {
+        DrawText(
+            "Nenhum ranking encontrado ainda.",
+            larguraTela / 2 - 240,
+            y,
+            28,
+            DARKPURPLE
+        );
+    } else {
+        char linha[120];
+
+        while (fgets(linha, sizeof(linha), arquivo) != NULL && posicao <= 10) {
+            DrawText(
+                TextFormat("%d. %s", posicao, linha),
+                larguraTela / 2 - 310,
+                y,
+                26,
+                DARKPURPLE
+            );
+
+            y += 38;
+            posicao++;
+        }
+
+        fclose(arquivo);
+
+        if (posicao == 1) {
+            DrawText(
+                "Ranking vazio.",
+                larguraTela / 2 - 90,
+                y,
+                28,
+                DARKPURPLE
+            );
+        }
+    }
+
+    DrawText(
+        "Pressione V para voltar",
+        larguraTela / 2 - 185,
+        alturaTela / 2 + 220,
+        24,
+        (Color){255, 70, 170, 255}
+    );
+}
+
+int main(void) {
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(0, 0, "Royal Rush");
     InitAudioDevice();
@@ -45,16 +154,15 @@ int main(void) {
     EstadoJogo estado = MENU;
 
     Music musica = LoadMusicStream("musicas/gameplay.ogg");
-    Music musicaBoss = LoadMusicStream("musicas/boss.ogg"); 
-
+    Music musicaBoss = LoadMusicStream("musicas/boss.ogg");
 
     PlayMusicStream(musica);
     SetMusicVolume(musica, 0.35f);
-    SetMusicVolume(musicaBoss, 0.35f); 
+    SetMusicVolume(musicaBoss, 0.35f);
 
     Texture2D texPrincesa = LoadTexture("imagens/princesa.png");
     Texture2D texFundo = LoadTexture("imagens/fundo.png");
-    Texture2D texFundoBoss = LoadTexture("imagens/fundo_boss.png"); // ALTERAÇÃO
+    Texture2D texFundoBoss = LoadTexture("imagens/fundo_boss.png");
     Texture2D texEstrela = LoadTexture("imagens/estrela.png");
     Texture2D texMenu = LoadTexture("imagens/menu.png");
     Texture2D texObjetivo = LoadTexture("imagens/objetivo.png");
@@ -73,14 +181,11 @@ int main(void) {
     jogador.podePular = false;
 
     float chaoY = ALTURA_TELA * 0.80f;
-
-    //Duas alturas possíveis das plataformas
     float platBaixaY = ALTURA_TELA * 0.67f;
     float platAltaY = ALTURA_TELA * 0.35f;
 
     Plataforma plataformas[4];
 
-    //chão
     plataformas[0].area = (Rectangle){0, chaoY, (float)LARGURA_TELA, (float)ALTURA_TELA};
     plataformas[0].bloqueia = true;
     plataformas[0].cor = BROWN;
@@ -99,7 +204,6 @@ int main(void) {
 
     int qtdPlataformas = 4;
 
-    //cada linha guarda o Y e a largura da plataforma
     float sequencias[4][2] = {
         {platBaixaY, 260},
         {platAltaY, 180},
@@ -140,8 +244,6 @@ int main(void) {
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-        
-        
         if (!musicaBossAtiva) {
             UpdateMusicStream(musica);
         } else {
@@ -151,8 +253,35 @@ int main(void) {
         float dt = GetFrameTime();
 
         if (estado == MENU) {
-            if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Rectangle botaoPlay = {
+                LARGURA_TELA / 2 - 130,
+                ALTURA_TELA - 190,
+                260,
+                130
+            };
+
+            Rectangle botaoRanking = GetBotaoRanking(LARGURA_TELA, ALTURA_TELA);
+            Vector2 mouse = GetMousePosition();
+
+            if (IsKeyPressed(KEY_ENTER)) {
                 estado = NOME;
+            }
+
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+
+                if (CheckCollisionPointRec(mouse, botaoRanking)) {
+                    estado = RANKING;
+                }
+
+                else if (CheckCollisionPointRec(mouse, botaoPlay)) {
+                    estado = NOME;
+                }
+            }
+        }
+
+        else if (estado == RANKING) {
+            if (IsKeyPressed(KEY_V)) {
+                estado = MENU;
             }
         }
 
@@ -188,7 +317,6 @@ int main(void) {
         else if (estado == JOGO) {
             timerTiro -= dt;
 
-            // Se o player bateu a meta de kills e não estamos em nenhuma fase do BOSS
             if (kills >= META_KILLS && !modoBoss && !transicaoBoss) {
                 transicaoBoss = true;
                 tempoTransicaoBoss = 0.0f;
@@ -202,26 +330,15 @@ int main(void) {
                 musicaBossAtiva = true;
             }
 
-            //Faz a transiçaõ para o surgimento do boss
             if (transicaoBoss) {
-
-                //vai contanto o tempo
                 tempoTransicaoBoss += dt;
 
-                //Se esse tempo passar do tempo esperado para o BOSS surgir, então iniciamos o BOSS
                 if (tempoTransicaoBoss >= TEMPO_SPAWN_BOSS && !bossCriado) {
-                    
-
                     InitBoss(&boss, LARGURA_TELA, ALTURA_TELA);
-
-                    
-                    //Boss começa fora da tela, para ter um efeituzinho de surgimento
                     boss.posicao.x = LARGURA_TELA + 150;
-
                     bossCriado = true;
 
                     spike.active = true;
-                    //sempre surge fora da tela
                     spike.position.x = LARGURA_TELA + 250;
                     spike.position.y = GetRandomValue(
                         (int)(ALTURA_TELA * 0.25f),
@@ -229,10 +346,7 @@ int main(void) {
                     );
                 }
 
-                //verifica se o boss foi criado e se não está na posição desejada ainda
                 if (bossCriado && boss.posicao.x > LARGURA_TELA * 0.90f) {
-
-                    //andamos com ele
                     boss.posicao.x -= 120 * dt;
                 }
 
@@ -243,28 +357,20 @@ int main(void) {
             }
 
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && timerTiro <= 0) {
-
                 if (ContarTirosAtivos() < 5) {
-
                     Vector2 mouse = GetMousePosition();
                     DispararTiro(jogador.posicao, mouse);
                     timerTiro = 0.2f;
-
                 }
             }
 
             AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
             AtualizarTiros(dt, LARGURA_TELA, ALTURA_TELA);
 
-            // ALTERAÇÃO: durante a transição não atualiza os inimigos normais
-            //Se não estamos em nenhuma fase do Boss então os inimigos normais são atualizados
             if (!modoBoss && !transicaoBoss) {
-
                 UpdateBruxa(&bruxa, jogador.posicao, LARGURA_TELA, ALTURA_TELA);
                 UpdateCogumelo(&cogumelo, LARGURA_TELA, chaoY);
-
             } else if (modoBoss) {
-                
                 UpdateBoss(&boss, jogador.posicao, LARGURA_TELA, ALTURA_TELA);
                 UpdateSpikeAleatorio(&spike, LARGURA_TELA, ALTURA_TELA);
             }
@@ -273,8 +379,6 @@ int main(void) {
                 tempoInvulneravel -= dt;
             }
 
-            //Subtraimos por 50 pois o personagem é desenhado centralizado, então a posição representa o centro, 
-            //mas rectangle usa canto superior esquerdo
             Rectangle hitboxJogador = {
                 jogador.posicao.x - 50,
                 jogador.posicao.y - 50,
@@ -282,9 +386,7 @@ int main(void) {
                 100
             };
 
-            // ALTERAÇÃO: colisões normais só antes da transição
             if (!modoBoss && !transicaoBoss) {
-
                 if (bruxa.ativa && kills < META_KILLS) {
                     Rectangle hitboxBruxa = {
                         bruxa.posicao.x - 75,
@@ -294,14 +396,12 @@ int main(void) {
                     };
 
                     for (int i = 0; i < GetMaxTiros(); i++) {
-
                         Rectangle tiroRect;
                         bool tiroAtivo;
 
                         GetTiroRect(i, &tiroRect, &tiroAtivo);
 
                         if (tiroAtivo && CheckCollisionRecs(tiroRect, hitboxBruxa)) {
-
                             bruxa.vidas--;
                             DesativarTiro(i);
 
@@ -321,7 +421,6 @@ int main(void) {
                 }
 
                 if (cogumelo.ativo && kills < META_KILLS) {
-
                     Rectangle hitboxCogumelo = {
                         cogumelo.posicao.x - 35,
                         cogumelo.posicao.y - 35,
@@ -330,7 +429,6 @@ int main(void) {
                     };
 
                     for (int i = 0; i < GetMaxTiros(); i++) {
-
                         Rectangle tiroRect;
                         bool tiroAtivo;
 
@@ -354,22 +452,17 @@ int main(void) {
                         }
                     }
                 }
-            }
-            else {
-
+            } else {
                 if (bossCriado && boss.ativo) {
-
                     Rectangle bossRect = GetBossRect(&boss);
 
                     for (int i = 0; i < GetMaxTiros(); i++) {
-
                         Rectangle tiroRect;
                         bool tiroAtivo;
 
                         GetTiroRect(i, &tiroRect, &tiroAtivo);
 
                         if (tiroAtivo && CheckCollisionRecs(tiroRect, bossRect)) {
-
                             BossReceberDano(&boss, 1);
                             DesativarTiro(i);
                             score += PONTOS_DANO_BOSS;
@@ -378,7 +471,6 @@ int main(void) {
                     }
 
                     if (!transicaoBoss && BossFoiDerrotado(&boss)) {
-
                         score += PONTOS_BOSS;
 
                         if (!rankingSalvo) {
@@ -392,9 +484,7 @@ int main(void) {
             }
 
             if (tempoInvulneravel <= 0) {
-
                 if (!modoBoss) {
-
                     for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
                         if (!bruxa.tiros[i].ativo) continue;
 
@@ -442,9 +532,7 @@ int main(void) {
                             tempoInvulneravel = 1.0f;
                         }
                     }
-                }
-                else if (!transicaoBoss) {
-
+                } else if (!transicaoBoss) {
                     if (CheckBossTirosCollision(&boss, hitboxJogador)) {
                         jogador.vidas--;
                         score -= PENALIDADE_DANO;
@@ -467,28 +555,19 @@ int main(void) {
             }
 
             for (int i = 1; i < qtdPlataformas; i++) {
-
                 plataformas[i].area.x -= VELOCIDADE_MAPA * dt;
 
-                //Verifica se a plataforma saiu completamente da tela
-                //Não destruimos a plataforma, ao invés disso reciclamos
                 if (plataformas[i].area.x + plataformas[i].area.width < 0) {
-
                     float maiorX = (float)LARGURA_TELA;
 
                     for (int j = 1; j < qtdPlataformas; j++) {
-
                         if (j != i && plataformas[j].area.x > maiorX) {
                             maiorX = plataformas[j].area.x;
                         }
                     }
 
                     plataformas[i].area.x = maiorX + GetRandomValue(350, 500);
-
-                    //Pega a altura da sequência atual, e colocano Y da plataforma
                     plataformas[i].area.y = sequencias[indiceSequencia][0];
-
-                    //Pega a largura da sequência atual e coloca na largura da plataforma
                     plataformas[i].area.width = sequencias[indiceSequencia][1];
 
                     indiceSequencia++;
@@ -510,7 +589,6 @@ int main(void) {
         }
 
         else if (estado == GAMEOVER || estado == YOUWIN) {
-
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) || IsKeyPressed(KEY_ENTER)) {
                 jogador.posicao = (Vector2){400, ALTURA_TELA * 0.30f};
                 jogador.vidas = 3;
@@ -527,11 +605,11 @@ int main(void) {
                 InitTiros();
 
                 modoBoss = false;
-                transicaoBoss = false; 
-                tempoTransicaoBoss = 0.0f; 
+                transicaoBoss = false;
+                tempoTransicaoBoss = 0.0f;
                 spike.active = false;
 
-                if (musicaBossAtiva) { // ALTERAÇÃO
+                if (musicaBossAtiva) {
                     StopMusicStream(musicaBoss);
                     PlayMusicStream(musica);
                     musicaBossAtiva = false;
@@ -550,16 +628,14 @@ int main(void) {
 
                 indiceSequencia = 0;
 
-                estado = JOGO;
+                estado = MENU;
             }
         }
 
-        //Inicio da parte dos desenhos:
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
         if (estado == MENU) {
-
             DrawTexturePro(
                 texMenu,
                 (Rectangle){0, 0, texMenu.width, texMenu.height},
@@ -568,10 +644,15 @@ int main(void) {
                 0,
                 WHITE
             );
+
+            DesenharBotaoRanking(LARGURA_TELA, ALTURA_TELA);
+        }
+
+        else if (estado == RANKING) {
+            DesenharTelaRanking(texFundo, LARGURA_TELA, ALTURA_TELA);
         }
 
         else if (estado == NOME) {
-
             DrawTexturePro(
                 texMenu,
                 (Rectangle){0, 0, texMenu.width, texMenu.height},
@@ -589,7 +670,6 @@ int main(void) {
         }
 
         else if (estado == OBJETIVO) {
-
             DrawTexturePro(
                 texObjetivo,
                 (Rectangle){0, 0, texObjetivo.width, texObjetivo.height},
@@ -601,8 +681,6 @@ int main(void) {
         }
 
         else if (estado == JOGO) {
-
-            // ALTERAÇÃO: fundo do boss durante a transição também
             Texture2D fundoAtual = (modoBoss || transicaoBoss) ? texFundoBoss : texFundo;
 
             DrawTexturePro(
@@ -620,7 +698,6 @@ int main(void) {
 
                 DrawRectangleRec(p, (Color){100, 35, 10, 255});
 
-                //Faz os desenhos das listras dos blocos
                 for (int linha = 0; linha < 2; linha++) {
                     int deslocamento = (linha % 2 == 0) ? 0 : 20;
                     int y = p.y + linha * alturaTijolo;
@@ -647,29 +724,22 @@ int main(void) {
                 }
             }
 
-            //Se não estamos numa das fases do boss, então desenhamos apenas os inimigos
             if (!modoBoss && !transicaoBoss) {
                 DrawBruxa(&bruxa);
                 DrawCogumelo(&cogumelo);
-            }
-            else if (bossCriado) {
+            } else if (bossCriado) {
                 DrawBoss(&boss);
                 DrawSpike(spike);
             }
 
             Texture2D texAtual = texPrincesa;
 
-            //Controle das animações da princesa
-            //Obs: não fizemos com zero, porque na altura máxima do pulo, a animação ficaria bugada
             if (jogador.estado == JUMP) {
-
                 if (jogador.velocidadeY < -50) {
                     texAtual = jump[0];
-                } 
-                else if (jogador.velocidadeY > 50) {
+                } else if (jogador.velocidadeY > 50) {
                     texAtual = jump[2];
-                }
-                else {
+                } else {
                     texAtual = jump[1];
                 }
             }
@@ -702,7 +772,6 @@ int main(void) {
                 DrawText("BOSS FINAL!", LARGURA_TELA / 2 - 110, 30, 30, RED);
             }
 
-            //texto simples de transição e escurecimento gradual da tela
             if (transicaoBoss) {
                 float alpha = 1.0f;
 
@@ -732,7 +801,6 @@ int main(void) {
         }
 
         else if (estado == GAMEOVER) {
-            
             DrawTexturePro(
                 texGameOver,
                 (Rectangle){0, 0, texGameOver.width, texGameOver.height},
@@ -792,7 +860,7 @@ int main(void) {
     UnloadSpike(&spike);
 
     UnloadTexture(texFundo);
-    UnloadTexture(texFundoBoss); // ALTERAÇÃO
+    UnloadTexture(texFundoBoss);
     UnloadTexture(texPrincesa);
     UnloadTexture(texEstrela);
     UnloadTexture(texMenu);
@@ -805,10 +873,13 @@ int main(void) {
     }
 
     UnloadMusicStream(musica);
-    UnloadMusicStream(musicaBoss); // ALTERAÇÃO
+    UnloadMusicStream(musicaBoss);
     CloseAudioDevice();
+
     LiberarRanking();
+
     CloseWindow();
 
     return 0;
 }
+
