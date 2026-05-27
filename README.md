@@ -23,14 +23,13 @@ O jogo possui sistema de vidas, pontuação e armazenamento de ranking local.
 
 ## Controles do Jogo
 
-| Ação | Comando |
-|--------|--------|
-| Mover para esquerda | A ou ← |
-| Mover para direita | D ou → |
-| Pular | Espaço ou ↑ |
-| Atirar | Botão esquerdo do mouse |
-| Confirmar telas | Enter |
+Durante a partida, o jogador pode utilizar os seguintes comandos:
 
+- **A** ou **seta para a esquerda (←)** para mover a personagem para a esquerda;
+- **D** ou **seta para a direita (→)** para mover a personagem para a direita;
+- **Espaço** ou **seta para cima (↑)** para pular;
+- **Botão esquerdo do mouse** para realizar ataques;
+- **Enter** para confirmar opções e avançar entre telas.
 ---
 
 ## Requisitos
@@ -164,7 +163,3 @@ Royal-Rush/
 - Davi Maltez Costa Vasconcelos
 - Ranilton Araújo da Silva Raposo Júnior
 
-  
-## 👥 Equipe
-
-Projeto desenvolvido como atividade acadêmica utilizando a linguagem C e a biblioteca Raylib para desenvolvimento de jogos 2D.
