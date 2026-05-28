@@ -11,8 +11,14 @@ void AtualizarTiros(float dt, int largura, int altura);
 void DesenharTiros(Texture2D textura);
 
 int GetMaxTiros(void);
-void GetTiroRect(int index, Rectangle *out, bool *ativo);
-void DesativarTiro(int index);
+
+void GetTiroRect(
+    int indiceTiro,
+    Rectangle *hitboxTiro,
+    bool *tiroEstaAtivo
+);
+
+void DesativarTiro(int indiceTiro);
 
 #endif
 

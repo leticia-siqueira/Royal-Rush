@@ -4,6 +4,7 @@
 #define MAX_TIROS 50
 
 typedef struct {
+    //Onde o tiro está na tela
     Vector2 posicao;
     Vector2 velocidade;
     bool ativo;
@@ -12,30 +13,38 @@ typedef struct {
 
 static Tiro tiros[MAX_TIROS];
 
+//Todos os tiros iniciam desativados
 void InitTiros(void) {
     for (int i = 0; i < MAX_TIROS; i++) {
         tiros[i].ativo = false;
     }
 }
 
-
-
+//Pega o destino(jogador) e manda pra posição desejada(mouse)
 void DispararTiro(Vector2 origem, Vector2 destino) {
+
+    //Vetor apontando da origem até o destino
     Vector2 direcao = {
         destino.x - origem.x,
         destino.y - origem.y
     };
+
+    //Cálcula o tamanho da distância entre origem e destino
     float tamanho = sqrt(direcao.x * direcao.x + direcao.y * direcao.y);
     if (tamanho == 0) return;
+    //Transformaos o vetor em um vetor de tamanho 1, o que acaba matendo apenas a direção
+    //Normalizamos para que o tiro tenha sempre a mesma velocidade, indepentende da distâncida ou mouse
     direcao.x /= tamanho;
     direcao.y /= tamanho;
 
+    //Procura espaço livre 
     for (int i = 0; i < MAX_TIROS; i++) {
+
         if (!tiros[i].ativo) {
             tiros[i].ativo       = true;
             tiros[i].posicao     = origem;
             tiros[i].rotacao     = 0;
-            tiros[i].velocidade  = (Vector2){direcao.x * 300, direcao.y * 300};
+            tiros[i].velocidade  = (Vector2){direcao.x * 300, direcao.y * 300}; //No final velocidade = direção normailizada x 300
             break;
         }
     }
@@ -52,11 +61,17 @@ int ContarTirosAtivos() {
 }
 
 void AtualizarTiros(float dt, int largura, int altura) {
+
     for (int i = 0; i < MAX_TIROS; i++) {
+
         if (!tiros[i].ativo) continue;
+
+        //nova posição = posição atual + velocidade x tempo
         tiros[i].posicao.x += tiros[i].velocidade.x * dt;
         tiros[i].posicao.y += tiros[i].velocidade.y * dt;
         tiros[i].rotacao   += 200 * dt;
+
+        //Saiu da tela
         if (tiros[i].posicao.x < 0 || tiros[i].posicao.x > largura ||
             tiros[i].posicao.y < 0 || tiros[i].posicao.y > altura) {
             tiros[i].ativo = false;
@@ -65,8 +80,11 @@ void AtualizarTiros(float dt, int largura, int altura) {
 }
 
 void DesenharTiros(Texture2D textura) {
+
     for (int i = 0; i < MAX_TIROS; i++) {
+
         if (!tiros[i].ativo) continue;
+
         DrawTexturePro(
             textura,
             (Rectangle){0, 0, textura.width, textura.height},
@@ -78,27 +96,33 @@ void DesenharTiros(Texture2D textura) {
     }
 }
 
-// ── Auxiliares públicos ─────────────────────────────────────
 
+//Permite a main saber quantos tiros existem no vetor
 int GetMaxTiros(void) {
     return MAX_TIROS;
 }
 
-void GetTiroRect(int index, Rectangle *out, bool *ativo) {
-    if (index < 0 || index >= MAX_TIROS) {
-        *ativo = false;
+//Entrega pra nossa main a hitbox do tiro, e se ele está ativo
+void GetTiroRect(int indiceTiro, Rectangle *hitboxTiro, bool *tiroEstaAtivo) 
+{
+
+    if (indiceTiro < 0 || indiceTiro >= MAX_TIROS) {
+        *tiroEstaAtivo = false;
         return;
     }
-    *ativo = tiros[index].ativo;
-    // Hitbox centralizada de 30x30 (mesmo tamanho do draw)
-    out->x      = tiros[index].posicao.x - 15;
-    out->y      = tiros[index].posicao.y - 15;
-    out->width  = 30;
-    out->height = 30;
+
+    *tiroEstaAtivo = tiros[indiceTiro].ativo;
+
+    hitboxTiro->x = tiros[indiceTiro].posicao.x - 15;
+    hitboxTiro->y = tiros[indiceTiro].posicao.y - 15;
+    hitboxTiro->width = 30;
+    hitboxTiro->height = 30;
 }
 
-void DesativarTiro(int index) {
-    if (index >= 0 && index < MAX_TIROS) {
-        tiros[index].ativo = false;
+void DesativarTiro(int indiceTiro) {
+
+    if (indiceTiro >= 0 && indiceTiro < MAX_TIROS) {
+        tiros[indiceTiro].ativo = false;
     }
+
 }
