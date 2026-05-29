@@ -1,185 +1,239 @@
 #include "bruxa.h"
+
 #include <math.h>
 
-#define INTERVALO_APARICAO_BRUXA 2.7f   // segundos entre aparições
-#define INTERVALO_TIRO_BRUXA     1.8f   // segundos entre tiros
-#define VELOCIDADE_TIRO_BRUXA    280.0f // velocidade do projétil
-#define VELOCIDADE_TIRO_ROTACAO  250.0f // giro visual do projétil
+#define INTERVALO_APARICAO_BRUXA 2.7f
+#define INTERVALO_TIRO_BRUXA 1.8f
+#define VELOCIDADE_TIRO_BRUXA 280.0f
+#define VELOCIDADE_TIRO_ROTACAO 250.0f
 
+/* FUNÇÕES AUXILIARES*/
 
-// Auxiliar: normaliza um vetor 2D
+static Vector2 NormalizarVetor(Vector2 vetor) {
+    float tamanho = sqrtf(vetor.x * vetor.x + vetor.y * vetor.y);
 
-static Vector2 NormalizarVetor(Vector2 v) {
-    float len = sqrtf(v.x * v.x + v.y * v.y);
-    if (len == 0) return (Vector2){1, 0};
-    return (Vector2){v.x / len, v.y / len};
+    if (tamanho == 0) {
+        return (Vector2){1, 0};
+    }
+
+    return (Vector2){
+        vetor.x / tamanho,
+        vetor.y / tamanho
+    };
 }
 
+/* INICIALIZAÇÃO */
 
-void InitBruxa(Bruxa *b) {
-    b->ativa                = false;
-    b->atirando             = false;
-    b->tempoCooldownAparicao = INTERVALO_APARICAO_BRUXA;
-    b->tempoAtirando        = 0.0f;
-    b->tirosDados           = 0;
-    b->tempoAnimAtaque = 0.0f;
-    b->vidas = 3;
+void InitBruxa(Bruxa *bruxa) {
+    bruxa->ativa = false;
+    bruxa->atirando = false;
 
-    // Posição inicial fora da tela (direita, área aérea)
-    b->posicao   = (Vector2){-200, 0};
-    b->velocidade = (Vector2){-120, 0}; // move para a esquerda
+    bruxa->tempoCooldownAparicao = INTERVALO_APARICAO_BRUXA;
+    bruxa->tempoAtirando = 0.0f;
+    bruxa->tempoAnimAtaque = 0.0f;
+
+    bruxa->tirosDados = 0;
+    bruxa->vidas = 3;
+
+    bruxa->posicao = (Vector2){-200, 0};
+    bruxa->velocidade = (Vector2){-120, 0};
 
     for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
-        b->tiros[i].ativo = false;
+        bruxa->tiros[i].ativo = false;
     }
 
-    b->texVoando  = LoadTexture("imagens/bruxa_voando.png");
-    b->texAtirando = LoadTexture("imagens/bruxa_atirando.png");
-    b->texTiro    = LoadTexture("imagens/tiro_bruxa.png");
+    bruxa->texVoando = LoadTexture("imagens/bruxa_voando.png");
+    bruxa->texAtirando = LoadTexture("imagens/bruxa_atirando.png");
+    bruxa->texTiro = LoadTexture("imagens/tiro_bruxa.png");
 }
 
+static float EscolherAlturaSeguraBruxa(int alturaTela) {
+    static int indiceAltura = 0;
 
-void UpdateBruxa(Bruxa *b, Vector2 posJogador, int largura, int altura) {
+    float alturasSeguras[4] = {
+        alturaTela * 0.18f,
+        alturaTela * 0.53f,
+        alturaTela * 0.23f,
+        alturaTela * 0.56f
+    };
 
+    float alturaEscolhida = alturasSeguras[indiceAltura];
+
+    indiceAltura++;
+
+    if (indiceAltura >= 4) {
+        indiceAltura = 0;
+    }
+
+    return alturaEscolhida;
+}
+
+// UPDATE
+
+void UpdateBruxa(Bruxa *bruxa, Vector2 posJogador, int larguraTela, int alturaTela) {
     float dt = GetFrameTime();
 
-    // ── APARIÇÃO ──────────────────────────────────────────────
-    if (!b->ativa) {
-        b->tempoCooldownAparicao -= dt;
-        if (b->tempoCooldownAparicao <= 0) {
-            float yAereo = (float)GetRandomValue((int)(altura * 0.15f),
-                                                  (int)(altura * 0.45f));
-            b->posicao       = (Vector2){(float)largura + 60, yAereo};
-            b->velocidade    = (Vector2){-170, 0};
-            b->ativa         = true;
-            b->atirando      = false;
-            b->tirosDados    = 0;
-            b->tempoAtirando = 0.0f;
-            b->vidas = 3;
-        }
-        goto atualizar_tiros; 
-    }
+    /* APARIÇÃO DA BRUXA*/
 
-    // ── ANIMAÇÃO DE ATAQUE ────────────────
-    if (b->atirando) {
-        b->tempoAnimAtaque += dt;
-        if (b->tempoAnimAtaque >= 0.4f) {
-            b->atirando        = false;
-            b->tempoAnimAtaque = 0.0f;
+    if (!bruxa->ativa) {
+        
+        bruxa->tempoCooldownAparicao -= dt;
+
+        if (bruxa->tempoCooldownAparicao <= 0) {
+            float yAereo = EscolherAlturaSeguraBruxa(alturaTela);
+
+            bruxa->posicao = (Vector2){(float)larguraTela + 60, yAereo};
+            bruxa->velocidade = (Vector2){-170, 0};
+
+            bruxa->ativa = true;
+            bruxa->atirando = false;
+
+            bruxa->tirosDados = 0;
+            bruxa->tempoAtirando = 0.0f;
+            bruxa->tempoAnimAtaque = 0.0f;
+
+            bruxa->vidas = 3;
         }
     }
 
-    // ── MOVIMENTO ─────────────────────────────────────────────
-    b->posicao.x += b->velocidade.x * dt;
-    // Saiu pela esquerda → desaparece e inicia cooldown
-    if (b->posicao.x + 120 < 0) {
-        b->ativa = false;
-        b->tempoCooldownAparicao = INTERVALO_APARICAO_BRUXA;
-        goto atualizar_tiros;
-    }
+    /* MOVIMENTO E DISPARO */
 
-    // ── DISPARO ───────────────────────────────────────────────
-    if (b->tirosDados < MAX_TIROS_BRUXA) {
-        b->tempoAtirando += dt;
-        if (b->tempoAtirando >= INTERVALO_TIRO_BRUXA) {
-            b->tempoAtirando = 0.0f;
+    if (bruxa->ativa) {
+        if (bruxa->atirando) {
+            bruxa->tempoAnimAtaque += dt;
 
-            // Procura slot livre
-            for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
-                if (!b->tiros[i].ativo) {
-                    Vector2 dir = {
-                        posJogador.x - b->posicao.x,
-                        posJogador.y - b->posicao.y
-                    };
-                    dir = NormalizarVetor(dir);
+            if (bruxa->tempoAnimAtaque >= 0.4f) {
+                bruxa->atirando = false;
+                bruxa->tempoAnimAtaque = 0.0f;
+            }
+        }
 
-                    b->tiros[i].ativo    = true;
-                    b->tiros[i].posicao  = b->posicao;
-                    b->tiros[i].velocidade = (Vector2){
-                        dir.x * VELOCIDADE_TIRO_BRUXA,
-                        dir.y * VELOCIDADE_TIRO_BRUXA
-                    };
-                    b->tiros[i].rotacao  = 0.0f;
-                    b->tirosDados++;
+        bruxa->posicao.x += bruxa->velocidade.x * dt;
 
-                    // Fica na textura "atirando" por 0.3 s
-                    b->atirando = true;
-                    break;
+        if (bruxa->posicao.x + 120 < 0) {
+            bruxa->ativa = false;
+            bruxa->tempoCooldownAparicao = INTERVALO_APARICAO_BRUXA;
+        }
+
+        if (bruxa->tirosDados < MAX_TIROS_BRUXA) {
+            bruxa->tempoAtirando += dt;
+
+            if (bruxa->tempoAtirando >= INTERVALO_TIRO_BRUXA) {
+                bruxa->tempoAtirando = 0.0f;
+
+                for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
+                    if (!bruxa->tiros[i].ativo) {
+                        Vector2 direcao = {
+                            posJogador.x - bruxa->posicao.x,
+                            posJogador.y - bruxa->posicao.y
+                        };
+
+                        direcao = NormalizarVetor(direcao);
+
+                        bruxa->tiros[i].ativo = true;
+                        bruxa->tiros[i].posicao = bruxa->posicao;
+
+                        bruxa->tiros[i].velocidade = (Vector2){
+                            direcao.x * VELOCIDADE_TIRO_BRUXA,
+                            direcao.y * VELOCIDADE_TIRO_BRUXA
+                        };
+
+                        bruxa->tiros[i].rotacao = 0.0f;
+
+                        bruxa->tirosDados++;
+                        bruxa->atirando = true;
+
+                        break;
+                    }
                 }
             }
         }
-        // Volta para textura de voo após breve animação
-        if (b->atirando && b->tempoAtirando >= 0.3f) {
-            b->atirando = false;
-        }
     }
 
-atualizar_tiros:;
-    // ── ATUALIZAÇÃO DOS TIROS ─────────────────────────────────
+    /* ATUALIZAÇÃO DOS TIROS DA BRUXA */
+
     for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
-        if (!b->tiros[i].ativo) continue;
+        if (!bruxa->tiros[i].ativo) {
+            continue;
+        }
 
-        b->tiros[i].posicao.x += b->tiros[i].velocidade.x * dt;
-        b->tiros[i].posicao.y += b->tiros[i].velocidade.y * dt;
+        bruxa->tiros[i].posicao.x += bruxa->tiros[i].velocidade.x * dt;
+        bruxa->tiros[i].posicao.y += bruxa->tiros[i].velocidade.y * dt;
+        bruxa->tiros[i].rotacao += VELOCIDADE_TIRO_ROTACAO * dt;
 
-        // Saiu da tela → desativa
-        if (b->tiros[i].posicao.x < -40  || b->tiros[i].posicao.x > largura  + 40 ||
-            b->tiros[i].posicao.y < -40  || b->tiros[i].posicao.y > altura + 40) {
-            b->tiros[i].ativo = false;
+        if (bruxa->tiros[i].posicao.x < -40 ||
+            bruxa->tiros[i].posicao.x > larguraTela + 40 ||
+            bruxa->tiros[i].posicao.y < -40 ||
+            bruxa->tiros[i].posicao.y > alturaTela + 40) {
+
+            bruxa->tiros[i].ativo = false;
         }
     }
-
 }
 
+/* DRAW */
 
-void DrawBruxa(Bruxa *b) {
+void DrawBruxa(Bruxa *bruxa) {
+
+    /* DESENHA OS TIROS */
+
     for (int i = 0; i < MAX_TIROS_BRUXA; i++) {
-        if (!b->tiros[i].ativo) continue;
-        Texture2D t = b->texTiro;
+        if (!bruxa->tiros[i].ativo) {
+            continue;
+        }
+
+        Texture2D texturaTiro = bruxa->texTiro;
+
         DrawTexturePro(
-            t,
-            (Rectangle){0, 0, t.width, t.height},
-            (Rectangle){b->tiros[i].posicao.x, b->tiros[i].posicao.y, 30, 30},
+            texturaTiro,
+            (Rectangle){0, 0, texturaTiro.width, texturaTiro.height},
+            (Rectangle){bruxa->tiros[i].posicao.x, bruxa->tiros[i].posicao.y, 30, 30},
             (Vector2){15, 15},
-            0.0f,
+            bruxa->tiros[i].rotacao,
             WHITE
         );
     }
 
-    if (!b->ativa) return;
+    if (!bruxa->ativa) {
+        return;
+    }
 
-    Texture2D texAtual = b->atirando ? b->texAtirando : b->texVoando;
+    /* DESENHA A BRUXA */
+
+    Texture2D texturaAtual = bruxa->atirando ? bruxa->texAtirando : bruxa->texVoando;
+
     DrawTexturePro(
-        texAtual,
-        (Rectangle){0, 0, texAtual.width, texAtual.height},
-        (Rectangle){b->posicao.x, b->posicao.y, 120, 120}, 
-        (Vector2){60, 60},                                   
+        texturaAtual,
+        (Rectangle){0, 0, texturaAtual.width, texturaAtual.height},
+        (Rectangle){bruxa->posicao.x, bruxa->posicao.y, 120, 120},
+        (Vector2){60, 60},
         0.0f,
         WHITE
     );
 
-    // fundo da barra
+    /* BARRA DE VIDA */
+
     DrawRectangle(
-        b->posicao.x - 30,
-        b->posicao.y - 85,
+        bruxa->posicao.x - 30,
+        bruxa->posicao.y - 85,
         60,
         8,
         DARKGRAY
     );
 
-    // vida atual
     DrawRectangle(
-        b->posicao.x - 30,
-        b->posicao.y - 85,
-        20 * b->vidas,
+        bruxa->posicao.x - 30,
+        bruxa->posicao.y - 85,
+        20 * bruxa->vidas,
         8,
         RED
     );
 }
 
+/* LIBERAÇÃO DE RECURSOS */
 
-void UnloadBruxa(Bruxa *b) {
-    UnloadTexture(b->texVoando);
-    UnloadTexture(b->texAtirando);
-    UnloadTexture(b->texTiro);
+void UnloadBruxa(Bruxa *bruxa) {
+    UnloadTexture(bruxa->texVoando);
+    UnloadTexture(bruxa->texAtirando);
+    UnloadTexture(bruxa->texTiro);
 }

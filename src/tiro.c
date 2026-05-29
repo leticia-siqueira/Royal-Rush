@@ -20,31 +20,29 @@ void InitTiros(void) {
     }
 }
 
-//Pega o destino(jogador) e manda pra posição desejada(mouse)
+
 void DispararTiro(Vector2 origem, Vector2 destino) {
 
-    //Vetor apontando da origem até o destino
     Vector2 direcao = {
         destino.x - origem.x,
         destino.y - origem.y
     };
 
-    //Cálcula o tamanho da distância entre origem e destino
+
     float tamanho = sqrt(direcao.x * direcao.x + direcao.y * direcao.y);
+
     if (tamanho == 0) return;
-    //Transformaos o vetor em um vetor de tamanho 1, o que acaba matendo apenas a direção
-    //Normalizamos para que o tiro tenha sempre a mesma velocidade, indepentende da distâncida ou mouse
+
     direcao.x /= tamanho;
     direcao.y /= tamanho;
 
-    //Procura espaço livre 
     for (int i = 0; i < MAX_TIROS; i++) {
 
         if (!tiros[i].ativo) {
             tiros[i].ativo       = true;
             tiros[i].posicao     = origem;
             tiros[i].rotacao     = 0;
-            tiros[i].velocidade  = (Vector2){direcao.x * 300, direcao.y * 300}; //No final velocidade = direção normailizada x 300
+            tiros[i].velocidade  = (Vector2){direcao.x * 300, direcao.y * 300}; //No final velocidade = direção normalizada x 300
             break;
         }
     }

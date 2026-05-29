@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 #define VELOCIDADE_MAPA 200
-#define META_KILLS 2
+#define META_KILLS 10
 
 #define PONTOS_BRUXA 150
 #define PONTOS_COGUMELO 100
@@ -182,10 +182,10 @@ int main(void) {
 
     // JOGADOR 
 
+    
     Jogador jogador = {0};
-
     jogador.posicao = (Vector2){400, ALTURA_TELA * 0.30f};
-    jogador.vidas = 3;
+    jogador.vidas = 4;
     jogador.velocidadeY = 0;
     jogador.podePular = false;
 
@@ -221,7 +221,6 @@ int main(void) {
         {platBaixaY, 180},
         {platAltaY, 260}
     };
-
     int indiceSequencia = 0;
 
     // INIMIGOS E OBJETOS 
@@ -340,7 +339,7 @@ int main(void) {
                 transicaoBoss = true;
                 tempoTransicaoBoss = 0.0f;
 
-                jogador.vidas = 3;
+                jogador.vidas = 4;
                 bruxa.ativa = false;
                 cogumelo.ativo = false;
 
@@ -488,7 +487,8 @@ int main(void) {
                         }
                     }
                 }
-            } else {
+            } 
+            else {
 
                 if (bossCriado && boss.ativo) {
                     Rectangle bossRect = GetBossRect(&boss);
@@ -585,7 +585,8 @@ int main(void) {
                             tempoInvulneravel = 1.0f;
                         }
                     }
-                } else if (!transicaoBoss) {
+                } 
+                else if (!transicaoBoss) {
                     if (CheckBossTirosCollision(&boss, hitboxJogador)) {
                         jogador.vidas--;
                         score -= PENALIDADE_DANO;
@@ -996,8 +997,6 @@ int main(void) {
     }
 
     // LIBERAÇÃO DE RECURSOS
-
-
     if (bossCriado) {
         UnloadBoss(&boss);
     }

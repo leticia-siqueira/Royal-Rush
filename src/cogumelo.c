@@ -72,7 +72,6 @@ void DrawCogumelo(CogumeloRei *c) {
     );
 }
 
-
 bool CheckCogumeloCollision(CogumeloRei *c, Rectangle playerRect) {
     if (!c->ativo) return false;
 
