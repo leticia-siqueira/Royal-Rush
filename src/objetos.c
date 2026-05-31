@@ -13,10 +13,13 @@ typedef struct NoSpike {
 static NoSpike *listaSpikes = NULL;
 static float timerSpawnSpike = 0;
 
+// Esta função cria um novo spike dinamicamente usando malloc.
+
 static void CriarSpike(int largura, int altura) {
     NoSpike *novo = (NoSpike *)malloc(sizeof(NoSpike));
 
-    if (novo == NULL) return;
+    if (novo == NULL) 
+        return;
 
     novo->position.x = largura + GetRandomValue(80, 260);
     novo->position.y = GetRandomValue((int)(altura * 0.25f), (int)(altura * 0.75f));
@@ -25,6 +28,8 @@ static void CriarSpike(int largura, int altura) {
 
     listaSpikes = novo;
 }
+
+// Esta função limpa todos os spikes da lista encadeada.
 
 static void LimparListaSpikes(void) {
     NoSpike *atual = listaSpikes;
@@ -38,6 +43,8 @@ static void LimparListaSpikes(void) {
     listaSpikes = NULL;
 }
 
+// Esta função inicializa o sistema de spikes.
+
 void InitSpike(SpikeBall *spike) {
     spike->position = (Vector2){1280, 520};
     spike->speed = 180;
@@ -48,6 +55,9 @@ void InitSpike(SpikeBall *spike) {
     timerSpawnSpike = 0;
 }
 
+// Esta função atualiza um spike simples, movendo-o para a esquerda.
+// Quando ele sai da tela, sua posição é resetada e volta para a direita.
+
 void UpdateSpike(SpikeBall *spike) {
     spike->position.x -= spike->speed * GetFrameTime();
 
@@ -55,6 +65,10 @@ void UpdateSpike(SpikeBall *spike) {
         spike->position.x = 1280;
     }
 }
+
+// Esta função é a principal lógica dos spikes aleatórios.
+// Ela controla o tempo de spawn, cria novos spikes, move todos para a esquerda
+// e remove da lista os spikes que saem da tela.
 
 void UpdateSpikeAleatorio(SpikeBall *spike, int largura, int altura) {
     if (!spike->active) return;
@@ -93,6 +107,8 @@ void UpdateSpikeAleatorio(SpikeBall *spike, int largura, int altura) {
     }
 }
 
+// Esta função desenha todos os spikes ativos na tela.
+
 void DrawSpike(SpikeBall spike) {
     if (!spike.active) return;
 
@@ -111,6 +127,9 @@ void DrawSpike(SpikeBall spike) {
         atual = atual->next;
     }
 }
+
+// Esta função verifica colisão entre os spikes e o jogador.
+// Se colidir, o spike é removido da lista e a função retorna true.
 
 bool CheckSpikeCollision(SpikeBall spike, Rectangle playerRect) {
     if (!spike.active) return false;
@@ -145,6 +164,9 @@ bool CheckSpikeCollision(SpikeBall spike, Rectangle playerRect) {
 
     return false;
 }
+
+// Esta função encerra o uso dos spikes.
+// Ela limpa a lista encadeada e descarrega a textura da memória.
 
 void UnloadSpike(SpikeBall *spike) {
     LimparListaSpikes();

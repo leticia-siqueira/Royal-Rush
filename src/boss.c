@@ -8,11 +8,17 @@
 #define TAMANHO_BOSS 390
 #define TAMANHO_TIRO_BOSS 95
 
-static Vector2 Normalizar(Vector2 v) {
-    float t = sqrtf(v.x * v.x + v.y * v.y);
-    if (t == 0) return (Vector2){-1, 0};
-    return (Vector2){v.x / t, v.y / t};
+// Esta função recebe um vetor qualquer e o transforma em um vetor unitário
+
+static Vector2 Normalizar(Vector2 vetor) {
+    float t = sqrtf(vetor.x * vetor.x + vetor.y * vetor.y);
+    if (t == 0) 
+        return (Vector2){-1, 0};
+
+    return (Vector2){vetor.x / t, vetor.y / t};
 }
+
+// Esta função inicializa todas as informações do boss
 
 void InitBoss(Boss *boss, int largura, int altura) {
     boss->ativo = true;
@@ -41,6 +47,9 @@ void InitBoss(Boss *boss, int largura, int altura) {
     }
 }
 
+// Esta função controla animações, tempo de ataque, criação dos tiros,
+// movimentação dos projéteis e remoção dos tiros que saem da tela.
+
 void UpdateBoss(Boss *boss, Vector2 posJogador, int largura, int altura) {
     if (!boss->ativo) return;
 
@@ -64,6 +73,7 @@ void UpdateBoss(Boss *boss, Vector2 posJogador, int largura, int altura) {
 
         for (int i = 0; i < MAX_TIROS_BOSS; i++) {
             if (!boss->tiros[i].ativo) {
+
                 Vector2 origem = {
                     boss->posicao.x - 185,
                     boss->posicao.y - 35
@@ -78,10 +88,12 @@ void UpdateBoss(Boss *boss, Vector2 posJogador, int largura, int altura) {
 
                 boss->tiros[i].ativo = true;
                 boss->tiros[i].posicao = origem;
+
                 boss->tiros[i].velocidade = (Vector2){
                     dir.x * VELOCIDADE_TIRO_BOSS,
                     dir.y * VELOCIDADE_TIRO_BOSS
                 };
+
                 boss->tiros[i].rotacao = 0;
 
                 boss->atirando = true;
@@ -93,10 +105,14 @@ void UpdateBoss(Boss *boss, Vector2 posJogador, int largura, int altura) {
     for (int i = 0; i < MAX_TIROS_BOSS; i++) {
         if (!boss->tiros[i].ativo) continue;
 
+        // Move o projétil
         boss->tiros[i].posicao.x += boss->tiros[i].velocidade.x * dt;
         boss->tiros[i].posicao.y += boss->tiros[i].velocidade.y * dt;
+
+        // Faz o projétil girar visualmente
         boss->tiros[i].rotacao += 180 * dt;
 
+        // Remove o tiro quando ele sai dos limites da tela
         if (boss->tiros[i].posicao.x < -120 || boss->tiros[i].posicao.x > largura + 120 ||
             boss->tiros[i].posicao.y < -120 || boss->tiros[i].posicao.y > altura + 120) {
             boss->tiros[i].ativo = false;
@@ -104,11 +120,15 @@ void UpdateBoss(Boss *boss, Vector2 posJogador, int largura, int altura) {
     }
 }
 
+// Esta função desenha o boss na tela.
+
 void DrawBoss(Boss *boss) {
-    if (!boss->ativo) return;
+    if (!boss->ativo) 
+        return;
 
     for (int i = 0; i < MAX_TIROS_BOSS; i++) {
-        if (!boss->tiros[i].ativo) continue;
+        if (!boss->tiros[i].ativo) 
+            continue;
 
         DrawTexturePro(
             boss->texTiro,
@@ -121,6 +141,9 @@ void DrawBoss(Boss *boss) {
     }
 
     Texture2D texAtual;
+
+    // Escolhe qual textura utilizar:
+    // ataque ou animação idle.
 
     if (boss->atirando) {
         texAtual = boss->texAtirando;
@@ -138,6 +161,8 @@ void DrawBoss(Boss *boss) {
         WHITE
     );
 
+    // Calcula a porcentagem de vida restante
+
     int larguraBarra = 300;
     int alturaBarra = 20;
     float vidaPercentual = (float)boss->vidas / boss->vidaMaxima;
@@ -147,9 +172,13 @@ void DrawBoss(Boss *boss) {
     DrawRectangleLines(boss->posicao.x - 150, boss->posicao.y - 230, larguraBarra, alturaBarra, WHITE);
 }
 
+// Esta função retorna a hitbox (área de colisão) do boss.
+
 Rectangle GetBossRect(Boss *boss) {
     return (Rectangle){boss->posicao.x - 160, boss->posicao.y - 160, 320, 320};
 }
+
+// Esta função aplica dano ao boss.
 
 void BossReceberDano(Boss *boss, int dano) {
     boss->vidas -= dano;
@@ -163,6 +192,8 @@ void BossReceberDano(Boss *boss, int dano) {
 bool BossFoiDerrotado(Boss *boss) {
     return boss->vidas <= 0;
 }
+
+// Esta função verifica se algum projétil do boss colidiu com o jogador.
 
 bool CheckBossTirosCollision(Boss *boss, Rectangle playerRect) {
     for (int i = 0; i < MAX_TIROS_BOSS; i++) {
@@ -183,6 +214,9 @@ bool CheckBossTirosCollision(Boss *boss, Rectangle playerRect) {
 
     return false;
 }
+
+// Esta função libera da memória todas as texturas carregadas pelo boss.
+// Deve ser chamada ao encerrar o jogo ou trocar de fase.
 
 void UnloadBoss(Boss *boss) {
     UnloadTexture(boss->texIdle1);
