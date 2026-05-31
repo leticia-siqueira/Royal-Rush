@@ -157,6 +157,10 @@ Royal-Rush/
 
 ---
 
+## Link da GamePlay do Jogo
+
+https://youtu.be/L6OGdQoyNh4
+
 ## Equipe
 
 - Leticia Maria da Silva Siqueira
