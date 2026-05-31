@@ -25,6 +25,7 @@ void AtualizarJogador(Jogador *jogador, Plataforma *plataformas, int qtd, float 
         100,
         100
     };
+    
 
     //COLISÃO COM PLATAFORMAS
     for (int i = 0; i < qtd; i++) {

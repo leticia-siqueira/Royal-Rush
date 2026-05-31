@@ -388,6 +388,15 @@ int main(void) {
             }
 
             AtualizarJogador(&jogador, plataformas, qtdPlataformas, dt);
+
+            // Impede a princesa de sair da tela pelos lados
+            if (jogador.posicao.x < 50) {
+                jogador.posicao.x = 50;
+            }
+
+            if (jogador.posicao.x > LARGURA_TELA - 50) {
+                jogador.posicao.x = LARGURA_TELA - 50;
+            }
             AtualizarTiros(dt, LARGURA_TELA, ALTURA_TELA);
 
             //UPDATE DOS INIMIGOS 
